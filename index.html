@@ -3,79 +3,166 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>aurora-decision v2.2</title>
-  <link rel="stylesheet" href="./style.css" />
+  <title>aurora-decision v2.3</title>
+  <link rel="stylesheet" href="./style.css?v=23" />
 </head>
+
 <body>
   <div class="wrap">
     <header class="top">
-      <div>
-        <h1>aurora-decision <span class="tag">v2.2</span></h1>
-        <p class="sub">
-          输入经纬度，一键生成：<b>1小时精准(10min)</b>｜<b>3小时概率态</b>｜<b>72小时范围(按天)</b>。
-          已加入太阳高度：<b>太阳高度>0° 一票否决</b>；夜窗以 <b>-12°</b> 为可拍门槛。
-        </p>
-      </div>
-      <div class="right">
-        <div id="status" class="status">就绪</div>
-        <div id="note" class="note"></div>
+      <div class="brand">
+        <div class="logo">🛰️</div>
+        <div>
+          <div class="h1">aurora-decision <span class="ver">v2.3</span></div>
+          <div class="sub">输入经纬度 → 生成即时预测（1小时 / 3小时 / 72小时）</div>
+        </div>
       </div>
     </header>
 
-    <section class="card">
+    <section class="card input">
       <div class="grid2">
-        <label>
-          纬度 Latitude
+        <label class="field">
+          <span>纬度 Latitude</span>
           <input id="lat" type="number" step="0.0001" placeholder="例如 53.47" />
         </label>
-        <label>
-          经度 Longitude
+        <label class="field">
+          <span>经度 Longitude</span>
           <input id="lon" type="number" step="0.0001" placeholder="例如 122.35" />
         </label>
       </div>
 
-      <div class="actions">
-        <button id="run">生成即时预测</button>
-        <button id="swap" class="ghost">交换经纬度</button>
+      <div class="row">
+        <button id="btnRun" class="btn primary">生成即时预测</button>
+        <button id="btnMag" class="btn ghost">转换磁纬度</button>
+        <div class="hint">提示：经纬度可在 Google/Apple/高德地图的“位置详情”里复制。</div>
       </div>
 
-      <details class="hint">
-        <summary>如何查经纬度？</summary>
-        <div class="hint-body">
-          地图 App 长按位置 → 复制经纬度（注意：纬度在 -90~90，经度在 -180~180）。
+      <details class="howto">
+        <summary>如何查看经纬度？</summary>
+        <div class="howtoBody">
+          <ol>
+            <li>打开任意地图 App，长按你所在位置。</li>
+            <li>进入“位置详情 / 分享位置”，通常会显示“纬度、经度”。</li>
+            <li>复制并粘贴到这里（纬度在前，经度在后）。</li>
+          </ol>
         </div>
       </details>
+
+      <div id="status" class="status"></div>
+      <div id="tips" class="tips"></div>
     </section>
 
     <section class="tabs">
-      <button class="tab active" data-tab="t1h">1小时精准</button>
-      <button class="tab" data-tab="t3h">3小时概率态</button>
-      <button class="tab" data-tab="t72h">72小时范围</button>
+      <div class="tabbar">
+        <button class="tab on" data-tab="t1">1小时精准</button>
+        <button class="tab" data-tab="t3">3小时概率态</button>
+        <button class="tab" data-tab="t72">72小时范围</button>
+      </div>
+
+      <!-- 1h -->
+      <div class="panel show" id="t1">
+        <div class="cards2">
+          <div class="card big">
+            <div class="k">当前建议（1小时内，10分钟粒度）</div>
+            <div id="oneHeadline" class="bigTitle">—</div>
+            <div class="metaLine">
+              <span id="oneLocalTime">本地时间：—</span>
+              <span class="sep">·</span>
+              <span id="oneOvation">OVATION：—</span>
+            </div>
+          </div>
+
+          <div class="card big">
+            <div class="k">上游实况（近实时）</div>
+            <div id="swLine" class="mono bigMono">V — | Bt — | Bz — | N —</div>
+            <div id="swSmall" class="metaSmall">—</div>
+          </div>
+        </div>
+
+        <div class="card tableCard">
+          <div class="tableHead">
+            <div class="th">时间（本地）</div>
+            <div class="th">结论</div>
+            <div class="th right">参考分（0-10）</div>
+          </div>
+          <div id="oneRows" class="rows"></div>
+        </div>
+
+        <div class="card explain">
+          <div class="k">1小时结论分级（5档）</div>
+          <ul class="list">
+            <li><b>强烈推荐</b>：值得立即行动（强触发 + 条件好）。</li>
+            <li><b>值得出门</b>：中高概率，建议上车或提前到位。</li>
+            <li><b>可蹲守</b>：有机会但不稳定，建议架好设备等变化。</li>
+            <li><b>低概率</b>：小概率，除非成本很低或就在现场。</li>
+            <li><b>不可观测</b>：当前不具备观测条件。</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 3h -->
+      <div class="panel" id="t3">
+        <div class="cards3">
+          <div class="card big">
+            <div class="k">当前系统状态（未来3小时不分分钟）</div>
+            <div id="threeState" class="bigTitle">—</div>
+            <div id="threeExplain" class="metaSmall">—</div>
+          </div>
+
+          <div class="card big">
+            <div class="k">太阳风送达能力综合模型</div>
+            <div id="p2Score" class="bigMono">—</div>
+            <div id="p2Explain" class="metaSmall">—</div>
+          </div>
+
+          <div class="card big">
+            <div class="k">云量条件（未来3小时）</div>
+            <div id="cloudNow" class="bigMono">—</div>
+            <div id="cloudExplain" class="metaSmall">—</div>
+          </div>
+        </div>
+
+        <div class="card explain">
+          <div class="k">3小时状态分级（4态）</div>
+          <ul class="list">
+            <li><b>爆发进行中</b>：触发明确，短时内值得马上看。</li>
+            <li><b>爆发概率上升</b>：系统更容易发生，但还未持续触发。</li>
+            <li><b>爆发后衰落期</b>：刚触发过，残留还在，但总体走弱。</li>
+            <li><b>静默</b>：背景不足或缺关键触发，先别投入。</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 72h -->
+      <div class="panel" id="t72">
+        <div class="card tableCard">
+          <div class="tableHead">
+            <div class="th">日期（本地）</div>
+            <div class="th">结论</div>
+            <div class="th">依据（人话）</div>
+          </div>
+          <div id="daysRows" class="rows"></div>
+        </div>
+
+        <div class="card explain">
+          <div class="k">72小时结论分级（按天）</div>
+          <ul class="list">
+            <li><b>可能性高</b>：能量背景 + 送达能力更强，值得提前规划。</li>
+            <li><b>有窗口</b>：存在机会，重点看云量与当晚即时模块。</li>
+            <li><b>小概率</b>：机会小，除非你在高纬/成本极低。</li>
+            <li><b>低可能</b>：背景偏弱，别指望太多。</li>
+            <li><b>不可观测</b>：当天不建议（直接不建议）。</li>
+          </ul>
+        </div>
+      </div>
     </section>
 
-    <section id="t1h" class="panel active">
-      <h2>① 1小时精准预测（10分钟粒度）</h2>
-      <div id="out1h" class="out"></div>
-      <div id="legend1h" class="legend"></div>
-    </section>
-
-    <section id="t3h" class="panel">
-      <h2>② 3小时概率预测（状态机）</h2>
-      <div id="out3h" class="out"></div>
-      <div id="legend3h" class="legend"></div>
-    </section>
-
-    <section id="t72h" class="panel">
-      <h2>③ 72小时范围预测（按天）</h2>
-      <div id="out72h" class="out"></div>
-      <div id="legend72h" class="legend"></div>
-    </section>
-
-    <footer class="footer">
-      <small>数据源：NOAA SWPC（OVATION nowcast、实时太阳风、Kp 预报）与 Open-Meteo 云量预报。</small>
+    <footer class="foot">
+      数据源：NOAA SWPC（OVATION nowcast，太阳风），NOAA Kp 预报，Open-Meteo 云量预报。<br/>
+      注：本工具为决策辅助，结果会受数据延迟与接口可用性影响。
     </footer>
   </div>
 
-  <script src="./app.js"></script>
+  <script src="./app.js?v=23"></script>
 </body>
 </html>
