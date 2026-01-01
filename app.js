@@ -4,6 +4,7 @@
  * - 72h: 按天范围预测 + 分列依据 + C值
  * - “可观测性门槛/窗口”后台计算，前台不出现相关字样
  * - 月角：按纬度软降权（后台），前台不露出
+ * - 修改选项卡
  */
 
 const $ = (id) => document.getElementById(id);
@@ -835,3 +836,29 @@ function attach(){
 }
 
 attach();
+
+function initTabs(){
+  const btns = Array.from(document.querySelectorAll('.tab-btn'));
+  const panels = Array.from(document.querySelectorAll('.tab-panel'));
+
+  if (!btns.length || !panels.length) return;
+
+  const activate = (name) => {
+    btns.forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+    panels.forEach(p => p.classList.toggle('active', p.dataset.panel === name));
+  };
+
+  // default: first tab
+  activate(btns[0].dataset.tab);
+
+  btns.forEach(b => {
+    b.addEventListener('click', () => activate(b.dataset.tab));
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  initTabs(); // 让选项卡能切换 + 默认只显示一个
+
+  const runBtn = document.getElementById('runBtn');
+  if (runBtn) runBtn.addEventListener('click', run); // 让“生成即时预测”能点击执行
+});
