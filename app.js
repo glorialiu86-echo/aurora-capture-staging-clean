@@ -732,8 +732,8 @@
         const missCN = missingKeys.map(k => (k==="v"?"V":k==="n"?"N":k==="bt"?"Bt":k==="bz"?"Bz":k)).join("、");
         setStatusText(`⚠️ 重要警告`);
         showAlertModal(`
-          <div> NOAA 返回数据缺失：<b>${escapeHTML(missCN)}</b></div>
-          <div class="mutedLine">下面结果为 <b>缺乏部分数据情况下的保守估算</b>（仅供参考），不是你这边的问题。</div>
+          <div> NOAA 端口无法更新数据：<b>${escapeHTML(missCN)}</b></div>
+          <div class="mutedLine">下面结果为缺乏部分数据情况下的<b>极端保守估算</b>，建议谨慎参考。</div>
         `);
       }else{
         setStatusText("已生成。");
