@@ -436,3 +436,32 @@ canvas{width:100% !important; height:100% !important}
   font-size: 11px;
   line-height: 1.55;
 }
+
+/* ====== 兜底：任何隐藏弹窗都必须彻底不占位、不拦截点击 ====== */
+.hidden{
+  display: none !important;
+}
+
+/* ====== aboutModal（背景介绍）兜底 ====== */
+#aboutModal{
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+}
+#aboutModal.hidden{
+  display: none !important;
+}
+#aboutModal .modalMask{
+  position: absolute;
+  inset: 0;
+}
+
+/* ====== alertOverlay（NOAA强提示）兜底：默认绝对不能拦截点击 ====== */
+#alertOverlay{
+  display: none !important;
+  pointer-events: none;
+}
+#alertOverlay.show{
+  display: flex !important;
+  pointer-events: auto;
+}
