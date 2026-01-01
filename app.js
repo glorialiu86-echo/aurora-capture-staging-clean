@@ -10,8 +10,47 @@
 
 (() => {
   "use strict";
+  function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeoutMs);
+
+  const opt = { ...options, signal: controller.signal };
+
+  return fetchWithTimeout(url, opt)
+    .finally(() => clearTimeout(id));
+}
+  function setRunBusy(isBusy){
+  const btn = document.getElementById("btnRun");
+  if(!btn) return;
+
+  btn.disabled = isBusy;
+  btn.style.opacity = isBusy ? "0.6" : "";
+  btn.style.cursor = isBusy ? "not-allowed" : "";
+
+  // 可选：让按钮文案有反馈
+  btn.textContent = isBusy ? "生成中…" : "生成即时预测";
+}
+  
+  
 
   // ---------- helpers ----------
+  function setRunBusy(isBusy){
+  const btn = document.getElementById("btnRun");
+  if(!btn) return;
+
+  btn.disabled = isBusy;
+  btn.textContent = isBusy ? "生成中…" : "生成即时预测";
+  btn.style.opacity = isBusy ? "0.6" : "";
+}
+  
+  function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeoutMs);
+
+  return fetchWithTimeout(url, { ...options, signal: controller.signal })
+    .finally(() => clearTimeout(id));
+}
+  
   const $ = (id) => document.getElementById(id);
   const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
   const round1 = (x) => Math.round(x * 10) / 10;
@@ -131,9 +170,9 @@
     let mag, plasma, note = null;
 
     try {
-      const [r1, r2] = await Promise.all([
-        fetch(magUrl, { cache: "no-store" }),
-        fetch(plasmaUrl, { cache: "no-store" })
+     const [r1, r2] = await Promise.all([
+      fetchWithTimeout(magUrl, { cache: "no-store" }, 8000),
+      fetchWithTimeout(plasmaUrl, { cache: "no-store" }, 8000)
       ]);
 
       const t1 = await r1.text();
@@ -197,7 +236,7 @@
   async function fetchKp() {
     const url = "https://services.swpc.noaa.gov/products/noaa-planetary-k-index-forecast.json";
     try {
-      const r = await fetch(url, { cache: "no-store" });
+      const r = await fetchWithTimeout(url, { cache: "no-store" });
       const t = await r.text();
       if (!t) throw new Error("empty");
       const j = JSON.parse(t);
@@ -215,7 +254,7 @@
   async function fetchOvation() {
     const url = "https://services.swpc.noaa.gov/json/ovation_aurora_latest.json";
     try {
-      const r = await fetch(url, { cache: "no-store" });
+      const r = await fetchWithTimeout(url, { cache: "no-store" });
       const t = await r.text();
       if (!t) throw new Error("empty");
       const j = JSON.parse(t);
@@ -233,7 +272,7 @@
   async function fetchClouds(lat, lon) {
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${encodeURIComponent(lat)}&longitude=${encodeURIComponent(lon)}&hourly=cloudcover_low,cloudcover_mid,cloudcover_high&forecast_days=3&timezone=auto`;
     try {
-      const r = await fetch(url, { cache: "no-store" });
+      const r = await fetchWithTimeout(url, { cache: "no-store" });
       const t = await r.text();
       if (!t) throw new Error("empty");
       const j = JSON.parse(t);
@@ -513,6 +552,7 @@
   // ---------- core run ----------
   async function run() {
     try {
+      setRunBusy(true);
       const latEl = $("lat");
       const lonEl = $("lon");
 
@@ -730,6 +770,11 @@
       safeHTML($("daysBody"), tbody.join(""));
       setStatusText("已生成。");
     } catch (err) {
+    console.error(err);
+    setStatusText("生成失败，已使用可用数据。");
+    } finally {
+    setRunBusy(false);
+    }
       console.error("[AuroraCapture] run error:", err);
       setStatusText("生成失败：请打开控制台查看错误。");
     }
