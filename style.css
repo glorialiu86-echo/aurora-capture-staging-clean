@@ -68,7 +68,29 @@ button.ghost{background:transparent}
 .hint{margin-top:10px;border:1px solid var(--line);border-radius:12px;padding:10px;background:#0c1220}
 .hint-body{margin-top:8px;color:var(--muted);font-size:13px;line-height:1.45}
 
-.panel{margin-top:16px}
+/* Tabs */
+.tabs{
+  margin-top:14px;
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+.tab{
+  background:#0c1220;
+  border:1px solid var(--line);
+  color:var(--muted);
+  padding:10px 14px;
+  border-radius:999px;
+}
+.tab.active{
+  color:var(--text);
+  background:linear-gradient(180deg,#101827,#0c1220);
+  border-color:#3a5683;
+}
+
+/* Panels */
+.panel{margin-top:14px;display:none}
+.panel.active{display:block}
 h2{margin:0 0 10px;font-size:16px;color:var(--text)}
 
 .out{
@@ -84,18 +106,24 @@ h2{margin:0 0 10px;font-size:16px;color:var(--text)}
   border:1px solid var(--line);
   background:#0f1420;
   border-radius:12px;
-  padding:10px 12px;
-  min-width:220px;
+  padding:12px 14px;
+  min-width:240px;
   flex:1;
 }
-.kpi .t{color:var(--muted);font-size:12px;margin-bottom:6px}
-.kpi .v{font-size:18px}
-.kpi .s{margin-top:8px;color:var(--muted);font-size:12px;line-height:1.35}
+.kpi .t{color:var(--muted);font-size:12px;margin-bottom:8px}
+
+/* 放大结论 */
+.kpi .v{
+  font-size:22px;
+  font-weight:700;
+  letter-spacing:.2px;
+}
+.kpi .s{margin-top:10px;color:var(--muted);font-size:12px;line-height:1.45}
 
 .table{border-collapse:collapse;width:100%;min-width:720px}
 .table th,.table td{
   border-top:1px solid rgba(255,255,255,0.06);
-  padding:10px 8px;
+  padding:12px 10px;
   text-align:center;
   font-size:12px;
   white-space:nowrap;
@@ -107,23 +135,39 @@ h2{margin:0 0 10px;font-size:16px;color:var(--text)}
   color:var(--muted);
   font-weight:600;
 }
+
+/* 放大时间列 */
+.table td.time{
+  font-size:14px;
+  font-weight:700;
+  letter-spacing:.2px;
+}
+
+/* 放大结论列 */
+.table td.judge{
+  font-size:14px;
+  font-weight:700;
+}
+
 .badge{
   display:inline-flex;align-items:center;gap:8px;
   border:1px solid var(--line);
-  padding:4px 10px;border-radius:999px;
+  padding:6px 12px;border-radius:999px;
   color:var(--muted);
   font-size:12px;
   background:#0f1420;
 }
 .dot{width:10px;height:10px;border-radius:999px;display:inline-block}
+
 .pill{
   display:inline-block;
-  padding:4px 10px;
+  padding:6px 12px;
   border-radius:999px;
   border:1px solid var(--line);
   background:#0f1420;
-  font-size:12px;
-  color:var(--muted);
+  font-size:13px;
+  color:var(--text);
+  font-weight:700;
 }
 
 .explain{
