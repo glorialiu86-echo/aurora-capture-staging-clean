@@ -206,21 +206,21 @@
       </div>
     </div>
   </div>
-  
-  <!-- 强提示弹窗（数据缺失/NOAA异常时弹出，必须手动关闭） -->
-  <div class="modalOverlay" id="alertOverlay" aria-hidden="true">
-    <div class="modalCard" role="dialog" aria-modal="true" aria-labelledby="alertTitle">
-      <div class="modalHead">
-        <div class="modalTitle" id="alertTitle">⚠️ NOAA 返回数据缺失。以下为缺乏数据情况下的保守估算（1小时精准模型）。</div>
+
+  <!-- NOAA 强提示弹窗（数据缺失时弹出，必须手动关闭） -->
+  <div class="alertOverlay" id="alertOverlay" aria-hidden="true">
+    <div class="alertCard" role="dialog" aria-modal="true" aria-labelledby="alertTitle">
+      <div class="alertHead">
+        <div class="alertTitle" id="alertTitle">⚠️ NOAA 返回数据缺失。以下为缺乏数据情况下的保守估算（1小时精准模型）。</div>
         <button class="modalX" id="alertClose" aria-label="关闭">✕</button>
       </div>
-      <div class="modalBody" id="alertBody">—</div>
-      <div class="modalFoot">
+      <div class="alertBody" id="alertBody">—</div>
+      <div class="alertFoot">
         <button class="btn primary" id="alertOk" type="button">知道了</button>
       </div>
     </div>
   </div>
-  
+
   <script src="./app.js?v=26"></script>
 </body>
 </html>
