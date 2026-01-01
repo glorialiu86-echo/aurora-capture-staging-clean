@@ -1,96 +1,21 @@
-/* Aurora Capture 极光捕网 v2.4.2 (Hotfix)
- * - 修复：按钮/选项卡事件绑定失效（2.4.x）
- * - 统一 tabs：.tab-btn + .tab-panel
- * - 绑定按钮：优先 btnRun/btnMag，其次 runBtn/magBtn，其次按文字兜底
- * - 自检：SunCalc/Chart/关键DOM缺失时给出明确提示（不“无反应”）
- *
- * 说明（前台不出现相关字样）：
- * - “可观测性门槛/窗口”、月角软降权仅用于后台打分，不在前台解释
+/* Aurora Capture 极光捕网 v2.4.3 (Stable Full JS)
+ * - 单入口 DOMContentLoaded（避免重复 bootstrap 导致按钮/选项卡失效）
+ * - Tabs：.tabs .tab (data-tab="t1/t3/t72") + .pane (id="t1/t3/t72")
+ * - 按钮：#btnRun / #btnMag
+ * - 弱提示落 UI：数据缺失时在状态栏下显示（不弹窗）
+ * - 评分统一：1–5 分（整数），图表也为 1–5
+ * - 后台：太阳高度门槛 & 月角软降权（前台不解释，只影响分数）
  */
 
 (() => {
   "use strict";
-  function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
-  const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), timeoutMs);
-
-  const opt = { ...options, signal: controller.signal };
-
-  return fetchWithTimeout(url, opt)
-    .finally(() => clearTimeout(id));
-}
-  function setRunBusy(isBusy){
-  const btn = document.getElementById("btnRun");
-  if(!btn) return;
-
-  btn.disabled = isBusy;
-  btn.style.opacity = isBusy ? "0.6" : "";
-  btn.style.cursor = isBusy ? "not-allowed" : "";
-
-  // 可选：让按钮文案有反馈
-  btn.textContent = isBusy ? "生成中…" : "生成即时预测";
-}
-  
-  
 
   // ---------- helpers ----------
-  function setRunBusy(isBusy){
-  const btn = document.getElementById("btnRun");
-  if(!btn) return;
-
-  btn.disabled = isBusy;
-  btn.textContent = isBusy ? "生成中…" : "生成即时预测";
-  btn.style.opacity = isBusy ? "0.6" : "";
-}
-  
-  function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
-  const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), timeoutMs);
-
-  return fetchWithTimeout(url, { ...options, signal: controller.signal })
-    .finally(() => clearTimeout(id));
-}
-  
   const $ = (id) => document.getElementById(id);
-  const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
-  const round1 = (x) => Math.round(x * 10) / 10;
   const abs = Math.abs;
+  const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+  const roundInt = (x) => Math.round(x);
 
-  function safeText(el, t) { if (el) el.textContent = t; }
-  function safeHTML(el, h) { if (el) el.innerHTML = h; }
-
-  function setStatusDots(items) {
-    const box = $("statusDots");
-    if (!box) return;
-    box.innerHTML = "";
-    items.forEach(it => {
-      const d = document.createElement("div");
-      d.className = `dot ${it.level}`;
-      d.textContent = it.text;
-      box.appendChild(d);
-    });
-  }
-  function setStatusText(t) { safeText($("statusText"), t); }
-
-  function cacheSet(key, value) {
-    try { localStorage.setItem(key, JSON.stringify({ ts: Date.now(), value })); } catch (e) {}
-  }
-  function cacheGet(key) {
-    try {
-      const raw = localStorage.getItem(key);
-      if (!raw) return null;
-      return JSON.parse(raw);
-    } catch (e) { return null; }
-  }
-  function fmtAge(ms) {
-    const m = Math.floor(ms / 60000);
-    if (m < 1) return "刚刚";
-    if (m < 60) return `${m} 分钟前`;
-    const h = Math.floor(m / 60);
-    return `${h} 小时前`;
-  }
-
-  // ---------- time fmt ----------
   function now() { return new Date(); }
   function fmtYMD(d) {
     const y = d.getFullYear();
@@ -112,6 +37,81 @@
       .replaceAll(">", "&gt;");
   }
 
+  // ---------- UI: status + weak warning ----------
+  function setStatusDots(items) {
+    const box = $("statusDots");
+    if (!box) return;
+    box.innerHTML = "";
+    items.forEach(it => {
+      const d = document.createElement("div");
+      d.className = `dot ${it.level}`;
+      d.textContent = it.text;
+      box.appendChild(d);
+    });
+  }
+
+  function setStatusText(t) {
+    const el = $("statusText");
+    if (el) el.textContent = t;
+  }
+
+  // 弱提示：显示在 statusRow 区域内（不改 HTML 也能插）
+  function ensureWarnEl() {
+    let w = $("uiWarn");
+    if (w) return w;
+
+    const host = $("statusText")?.parentElement; // statusRow
+    if (!host) return null;
+
+    w = document.createElement("div");
+    w.id = "uiWarn";
+    w.style.marginTop = "6px";
+    w.style.fontSize = "12px";
+    w.style.color = "rgba(255,255,255,.60)";
+    w.style.lineHeight = "1.45";
+    w.style.width = "100%";
+    w.textContent = "";
+    host.appendChild(w);
+    return w;
+  }
+
+  function setWeakWarn(msg) {
+    const w = ensureWarnEl();
+    if (!w) return;
+    w.textContent = msg || "";
+  }
+
+  // ---------- cache ----------
+  function cacheSet(key, value) {
+    try { localStorage.setItem(key, JSON.stringify({ ts: Date.now(), value })); } catch (e) {}
+  }
+  function cacheGet(key) {
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) return null;
+      return JSON.parse(raw);
+    } catch (e) { return null; }
+  }
+  function fmtAge(ms) {
+    const m = Math.floor(ms / 60000);
+    if (m < 1) return "刚刚";
+    if (m < 60) return `${m} 分钟前`;
+    const h = Math.floor(m / 60);
+    return `${h} 小时前`;
+  }
+
+  // 给 fetch 加一个超时，避免“卡住导致像点不动”
+  async function fetchWithTimeout(url, opts = {}, timeoutMs = 12000) {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), timeoutMs);
+    try {
+      const r = await fetch(url, { ...opts, signal: ctrl.signal });
+      return r;
+    } finally {
+      clearTimeout(t);
+    }
+  }
+
   // ---------- astro (SunCalc required) ----------
   function deg(rad) { return rad * 180 / Math.PI; }
 
@@ -130,7 +130,7 @@
     } catch (e) { return -999; }
   }
 
-  // 后台：可观测性门槛（前台不解释）
+  // 后台：门槛（前台不解释）
   function obsGate(date, lat, lon) {
     const s = getSunAltDeg(date, lat, lon);
     return {
@@ -139,10 +139,9 @@
     };
   }
 
-  // 月角软降权（按纬度档位 + 月亮高度，前台不展示）
+  // 月角软降权（前台不展示）
   function moonFactorByLat(lat, moonAltDeg) {
     if (moonAltDeg <= 0) return 1.0;
-
     const L = abs(lat);
     const zone = (L >= 67) ? "high" : (L >= 62 ? "mid" : "edge");
 
@@ -167,12 +166,12 @@
     const magUrl = "https://services.swpc.noaa.gov/products/solar-wind/mag-2-hour.json";
     const plasmaUrl = "https://services.swpc.noaa.gov/products/solar-wind/plasma-2-hour.json";
 
-    let mag, plasma, note = null;
+    let mag, plasma, note;
 
     try {
-     const [r1, r2] = await Promise.all([
-      fetchWithTimeout(magUrl, { cache: "no-store" }, 8000),
-      fetchWithTimeout(plasmaUrl, { cache: "no-store" }, 8000)
+      const [r1, r2] = await Promise.all([
+        fetchWithTimeout(magUrl, { cache: "no-store" }, 12000),
+        fetchWithTimeout(plasmaUrl, { cache: "no-store" }, 12000),
       ]);
 
       const t1 = await r1.text();
@@ -181,22 +180,22 @@
 
       mag = JSON.parse(t1);
       plasma = JSON.parse(t2);
-
       cacheSet("cache_noaa_mag", mag);
       cacheSet("cache_noaa_plasma", plasma);
       note = "✅ NOAA 已更新";
     } catch (e) {
       const cMag = cacheGet("cache_noaa_mag");
-      const cPlasma = cacheGet("cache_noaa_plasma");
-      if (cMag?.value && cPlasma?.value) {
+      const cPl = cacheGet("cache_noaa_plasma");
+      if (cMag?.value && cPl?.value) {
         mag = cMag.value;
-        plasma = cPlasma.value;
+        plasma = cPl.value;
         note = `⚠️ NOAA 暂不可用，使用缓存（${fmtAge(Date.now() - (cMag.ts || Date.now()))}）`;
       } else {
         return { ok: false, note: "❌ NOAA 暂不可用且无缓存", data: null };
       }
     }
 
+    // parse rows
     const magHeader = mag[0];
     const magRows = mag.slice(1).map(row => {
       const o = {};
@@ -211,14 +210,14 @@
       return o;
     });
 
-    const lastMag = magRows[magRows.length - 1];
-    const lastPl = plRows[plRows.length - 1];
+    const lastMag = magRows[magRows.length - 1] || {};
+    const lastPl = plRows[plRows.length - 1] || {};
 
-    const v = Number(lastPl?.speed);
-    const n = Number(lastPl?.density);
-    const bt = Number(lastMag?.bt);
-    const bz = Number(lastMag?.bz);
-    const time = lastMag?.time_tag || lastPl?.time_tag || null;
+    const v = Number(lastPl.speed);
+    const n = Number(lastPl.density);
+    const bt = Number(lastMag.bt);
+    const bz = Number(lastMag.bz);
+    const time = lastMag.time_tag || lastPl.time_tag || null;
 
     return {
       ok: true,
@@ -236,7 +235,7 @@
   async function fetchKp() {
     const url = "https://services.swpc.noaa.gov/products/noaa-planetary-k-index-forecast.json";
     try {
-      const r = await fetchWithTimeout(url, { cache: "no-store" });
+      const r = await fetchWithTimeout(url, { cache: "no-store" }, 12000);
       const t = await r.text();
       if (!t) throw new Error("empty");
       const j = JSON.parse(t);
@@ -254,7 +253,7 @@
   async function fetchOvation() {
     const url = "https://services.swpc.noaa.gov/json/ovation_aurora_latest.json";
     try {
-      const r = await fetchWithTimeout(url, { cache: "no-store" });
+      const r = await fetchWithTimeout(url, { cache: "no-store" }, 12000);
       const t = await r.text();
       if (!t) throw new Error("empty");
       const j = JSON.parse(t);
@@ -272,7 +271,7 @@
   async function fetchClouds(lat, lon) {
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${encodeURIComponent(lat)}&longitude=${encodeURIComponent(lon)}&hourly=cloudcover_low,cloudcover_mid,cloudcover_high&forecast_days=3&timezone=auto`;
     try {
-      const r = await fetchWithTimeout(url, { cache: "no-store" });
+      const r = await fetchWithTimeout(url, { cache: "no-store" }, 12000);
       const t = await r.text();
       if (!t) throw new Error("empty");
       const j = JSON.parse(t);
@@ -300,30 +299,8 @@
     const c = Math.acos(clamp(cosc, -1, 1));
     return 90 - deg(c);
   }
-  function score5FromC10(c){
-  if (c >= 8.2) return 5;
-  if (c >= 6.8) return 4;
-  if (c >= 5.0) return 3;
-  if (c >= 2.8) return 2;
-  return 1;
-}
-  function label1h(c10){
-  const s = score5FromC10(c10);
-  if (s === 5) return { score: 5, t: "强烈推荐", cls: "g" };
-  if (s === 4) return { score: 4, t: "值得出门", cls: "g" };
-  if (s === 3) return { score: 3, t: "可蹲守", cls: "b" };
-  if (s === 2) return { score: 2, t: "低概率", cls: "y" };
-  return { score: 1, t: "不可观测", cls: "r" };
-}
 
-  function label72(c) {
-    if (c >= 7.2) return { t: "可能性高", cls: "g" };
-    if (c >= 5.6) return { t: "有窗口", cls: "b" };
-    if (c >= 4.2) return { t: "小概率", cls: "y" };
-    if (c >= 2.8) return { t: "低可能", cls: "y" };
-    return { t: "不可观测", cls: "r" };
-  }
-
+  // 你原来内部 0-10 的连续分还保留，用来更细腻地算
   function baseScoreFromSW(sw) {
     const v = sw.v ?? 0;
     const bt = sw.bt ?? 0;
@@ -339,6 +316,24 @@
     return clamp(raw, 0, 10);
   }
 
+  // 把连续分映射为 1-5（整数）
+  function score5FromC(c) {
+    // 你要的 5档：5 强烈推荐 / 4 值得出门 / 3 可蹲守 / 2 低概率 / 1 不可观测
+    if (c >= 8.2) return 5;
+    if (c >= 6.8) return 4;
+    if (c >= 5.0) return 3;
+    if (c >= 2.8) return 2;
+    return 1;
+  }
+
+  function labelFromScore5(s) {
+    if (s === 5) return { t: "强烈推荐", cls: "g" };
+    if (s === 4) return { t: "值得出门", cls: "g" };
+    if (s === 3) return { t: "可蹲守", cls: "b" };
+    if (s === 2) return { t: "低概率", cls: "y" };
+    return { t: "不可观测", cls: "r" };
+  }
+
   function deliverModel(sw) {
     const v = sw.v ?? 0;
     const bt = sw.bt ?? 0;
@@ -348,7 +343,6 @@
     const okV = v >= 430;
     const okN = n >= 2.0;
     const count = (okBt ? 1 : 0) + (okV ? 1 : 0) + (okN ? 1 : 0);
-
     return { count, okBt, okV, okN };
   }
 
@@ -364,7 +358,7 @@
 
     if (trig && bg) return { state: "爆发进行中", hint: "触发更明确，短时内值得马上看。", score: 8.0 };
     if (bg && (dense || trig)) return { state: "爆发概率上升", hint: "系统更容易发生，但未到持续触发。", score: 6.4 };
-    if (bg) return { state: "爆发后衰落期", hint: "刚有过波动的概率更高，可能余震一会儿。", score: 5.4 };
+    if (bg) return { state: "爆发后衰落期", hint: "刚有过波动，仍可能余震一会儿。", score: 5.4 };
     return { state: "静默", hint: "背景不足或触发不清晰，先别投入。", score: 3.0 };
   }
 
@@ -486,7 +480,7 @@
     return ok / total;
   }
 
-  function pickOvationForLat(ov) {
+  function pickOvation(ov) {
     try {
       if (!ov) return null;
       if (ov.ObservationTime || ov.ForecastTime) return "已拉取";
@@ -494,14 +488,13 @@
     } catch (e) { return null; }
   }
 
-  // ---------- chart ----------
+  // ---------- chart (1–5) ----------
   let chart = null;
 
-  function renderChart(labels, values) {
+  function renderChart(labels, values1to5) {
     const canvas = $("cChart");
     if (!canvas) return;
 
-    // Chart.js required
     if (!window.Chart) {
       setStatusText("图表模块未加载（Chart.js）。");
       return;
@@ -516,8 +509,8 @@
       data: {
         labels,
         datasets: [{
-          label: "C值",
-          data: values,
+          label: "评分",
+          data: values1to5,
           borderWidth: 0,
           borderRadius: 10
         }]
@@ -529,12 +522,9 @@
           y: {
             min: 1,
             max: 5,
-            ticks: {
-              stepSize: 1,
-              color: "rgba(255,255,255,.55)"
-            },
+            ticks: { color: "rgba(255,255,255,.55)", stepSize: 1 },
             grid: { color: "rgba(255,255,255,.08)" }
-          },,
+          },
           x: {
             ticks: { color: "rgba(255,255,255,.55)" },
             grid: { display: false }
@@ -544,7 +534,7 @@
           legend: { display: false },
           tooltip: {
             callbacks: {
-              label: (ctx2) => `C值：${ctx2.parsed.y} 分`
+              label: (c) => `评分：${c.parsed.y} 分`
             }
           }
         }
@@ -556,313 +546,320 @@
     return `<span class="badge ${cls}"><span class="bDot"></span>${text}</span>`;
   }
   function scoreHTML(v) {
-    return `<span class="scorePill">${round1(v)}</span>`;
+    return `<span class="scorePill">${v}</span>`;
+  }
+
+  // ---------- tabs ----------
+  function initTabs() {
+    const tabs = Array.from(document.querySelectorAll(".tabs .tab"));
+    const panes = Array.from(document.querySelectorAll(".pane"));
+    if (!tabs.length || !panes.length) return;
+
+    const activate = (id) => {
+      tabs.forEach(t => t.classList.toggle("active", t.dataset.tab === id));
+      panes.forEach(p => p.classList.toggle("active", p.id === id));
+    };
+
+    const defaultTab = tabs.find(t => t.classList.contains("active")) || tabs[0];
+    activate(defaultTab.dataset.tab);
+
+    tabs.forEach(t => {
+      t.addEventListener("click", (e) => {
+        e.preventDefault();
+        activate(t.dataset.tab);
+      }, { passive: false });
+    });
   }
 
   // ---------- core run ----------
   async function run() {
-    try {
-      setRunBusy(true);
-      const latEl = $("lat");
-      const lonEl = $("lon");
+    setWeakWarn(""); // 每次生成前先清掉弱提示
 
-      const lat = Number(latEl?.value);
-      const lon = Number(lonEl?.value);
-
-      if (!isFinite(lat) || !isFinite(lon)) {
-        setStatusText("请先输入有效经纬度。");
-        return;
-      }
-
-      // SunCalc sanity (without telling user why)
-      if (!window.SunCalc) {
-        setStatusText("关键计算模块未加载（SunCalc）。");
-        return;
-      }
-      const softWarnings = [];
-      setStatusText("拉取数据中…");
-      setStatusDots([
-        { level: "warn", text: "NOAA 拉取中" },
-        { level: "warn", text: "Kp 拉取中" },
-        { level: "warn", text: "云量拉取中" },
-        { level: "warn", text: "OVATION 拉取中" },
-      ]);
-
-      // 地理纬度门槛（你要求：不解释）
-      if (abs(lat) < 50) {
-        safeText($("oneHeroLabel"), "不可观测");
-        safeText($("oneHeroMeta"), "—");
-        safeText($("swLine"), "V — ｜ Bt — ｜ Bz — ｜ N —");
-        safeText($("swMeta"), "—");
-        renderChart(["+10m", "+20m", "+30m", "+40m", "+50m", "+60m"], [0, 0, 0, 0, 0, 0]);
-        safeText($("threeState"), "静默");
-        safeText($("threeHint"), "—");
-        safeText($("threeDeliver"), "—");
-        safeText($("threeDeliverMeta"), "—");
-        safeText($("threeClouds"), "Low —% ｜ Mid —% ｜ High —%");
-        safeHTML($("daysBody"), `<tr><td colspan="4" class="muted">不可观测。</td></tr>`);
-        setStatusDots([
-          { level: "ok", text: "NOAA —" },
-          { level: "ok", text: "Kp —" },
-          { level: "ok", text: "云量 —" },
-          { level: "ok", text: "OVATION —" },
-        ]);
-        setStatusText("已生成。");
-        return;
-      }
-
-      const [noaa, kp, clouds, ova] = await Promise.all([
-        fetchSWPC2h(),
-        fetchKp(),
-        fetchClouds(lat, lon),
-        fetchOvation()
-      ]);
-      // 统计弱提示：哪个源掉了 / 哪个关键字段缺了
-        if (!noaa.ok) softWarnings.push("NOAA");
-        if (!kp.ok) softWarnings.push("Kp");
-        if (!clouds.ok) softWarnings.push("云量");
-        if (!ova.ok) softWarnings.push("OVATION");
-        
-        const sw = noaa.data;
-        if (sw) {
-          if (sw.bz == null) softWarnings.push("Bz");
-          if (sw.bt == null) softWarnings.push("Bt");
-          if (sw.v  == null) softWarnings.push("V");
-          if (sw.n  == null) softWarnings.push("N");
-        } else {
-          // NOAA 没数据但如果还有缓存/兜底，你也能提醒一句
-          softWarnings.push("上游参数");
-        }
-      setStatusDots([
-        { level: noaa.ok ? "ok" : "bad", text: noaa.note || "NOAA" },
-        { level: kp.ok ? "ok" : "bad", text: kp.note || "Kp" },
-        { level: clouds.ok ? "ok" : "bad", text: clouds.note || "云量" },
-        { level: ova.ok ? "ok" : "bad", text: ova.note || "OVATION" },
-      ]);
-
-      if (!sw) {
-        safeText($("oneHeroLabel"), "不可观测");
-        safeText($("oneHeroMeta"), "—");
-        safeText($("swLine"), "V — ｜ Bt — ｜ Bz — ｜ N —");
-        safeText($("swMeta"), "—");
-        renderChart(["+10m", "+20m", "+30m", "+40m", "+50m", "+60m"], [0, 0, 0, 0, 0, 0]);
-        setStatusText("部分数据缺失，已用可用数据生成。");
-        return;
-      }
-
-      const vTxt = sw.v == null ? "—" : round1(sw.v);
-      const btTxt = sw.bt == null ? "—" : round1(sw.bt);
-      const bzTxt = sw.bz == null ? "—" : round1(sw.bz);
-      const nTxt = sw.n == null ? "—" : round1(sw.n);
-
-      safeText($("swLine"), `V ${vTxt} ｜ Bt ${btTxt} ｜ Bz ${bzTxt} ｜ N ${nTxt}`);
-      safeText($("swMeta"), sw.time_tag ? `NOAA 时间：${sw.time_tag}` : "—");
-
-      const mlat = approxMagLat(lat, lon);
-      const base = baseScoreFromSW(sw);
-      const baseDate = now();
-
-      // 1h: 10min bins
-      const labels = [];
-      const vals = [];
-      let heroC = 0;
-
-      for (let i = 0; i < 6; i++) {
-        const d = new Date(baseDate.getTime() + (i + 1) * 10 * 60000);
-
-        const gate = obsGate(d, lat, lon);
-        const moonAlt = getMoonAltDeg(d, lat, lon);
-        const moonF = moonFactorByLat(lat, moonAlt);
-
-        const latBoost = clamp((mlat - 55) / 12, 0, 1);
-        const latF = 0.85 + latBoost * 0.15;
-
-        const decay = Math.pow(0.92, i);
-        let c = base * decay;
-
-        if (gate.hardBlock) {
-          c = 0;
-        } else {
-          if (!gate.inWindow) c *= 0.55;
-          c *= moonF;
-          c *= latF;
-        }
-
-        c = clamp(c, 0, 10);
-        labels.push(fmtHM(d));
-        vals.push(score5FromC10(c));
-        if (i === 0) heroC = c;
-      }
-
-      const heroObj = label1h(heroC);
-      safeText($("oneHeroLabel"), heroObj.t);
-      safeText(
-        $("oneHeroMeta"),
-        `本地时间：${fmtYMDHM(baseDate)} ・ OVATION：${ova.ok ? (pickOvationForLat(ova.data) ?? "—") : "—"}`
-      );
-
-      renderChart(labels, vals);
-
-      // 3h
-      let s3 = state3h(sw);
-      const del = deliverModel(sw);
-
-      const g3 = obsGate(baseDate, lat, lon);
-      const moonAlt3 = getMoonAltDeg(baseDate, lat, lon);
-      const moonF3 = moonFactorByLat(lat, moonAlt3);
-
-      let s3score = s3.score;
-      if (g3.hardBlock) s3score = 0;
-      else {
-        if (!g3.inWindow) s3score *= 0.65;
-        s3score *= moonF3;
-      }
-
-      if (heroObj.t === "不可观测") {
-        if (s3.state === "爆发进行中") s3 = { ...s3, state: "爆发概率上升", hint: "—" };
-        if (s3.state === "爆发概率上升") s3 = { ...s3, state: "爆发后衰落期", hint: "—" };
-      }
-
-      if (s3score < 3.2) s3 = { ...s3, state: "静默", hint: "—" };
-      else if (s3score < 5.0 && s3.state === "爆发进行中") s3 = { ...s3, state: "爆发概率上升", hint: "—" };
-
-      safeText($("threeState"), s3.state);
-      safeText($("threeHint"), s3.hint || "—");
-      safeText($("threeDeliver"), `${del.count}/3 成立`);
-      safeText($("threeDeliverMeta"), `Bt平台${del.okBt ? "✅" : "⚠️"} ・ 速度背景${del.okV ? "✅" : "⚠️"} ・ 密度结构${del.okN ? "✅" : "⚠️"}`);
-
-      let cloudBest = null;
-      if (clouds.ok && clouds.data) cloudBest = bestCloud3h(clouds.data, baseDate);
-      safeText(
-        $("threeClouds"),
-        cloudBest
-          ? `Low ${cloudBest.low}% ｜ Mid ${cloudBest.mid}% ｜ High ${cloudBest.high}%`
-          : `Low —% ｜ Mid —% ｜ High —%`
-      );
-
-      // 72h
-      const days = next3DaysLocal(baseDate);
-      const kpMap = kp.ok ? kpMaxByDay(kp.data) : null;
-
-      const tbody = [];
-      days.forEach(d => {
-        const key = fmtYMD(d);
-        const kpMax = kpMap?.get(key) ?? null;
-
-        const sKp = kpMax == null ? 0.45 : clamp((kpMax - 3.5) / (7.0 - 3.5), 0, 1);
-        const sDel = del.count / 3;
-        const sCloud = scoreCloudDay(clouds.ok ? clouds.data : null, d);
-
-        let cDay = (sKp * 0.48 + sDel * 0.32 + sCloud * 0.20) * 10;
-
-        const nightRatio = estimateNightRatio(d, lat, lon);
-        cDay *= (0.55 + nightRatio * 0.45);
-
-        const mAlt = getMoonAltDeg(new Date(d.getTime() + 12 * 3600 * 1000), lat, lon);
-        const fMoon = soften(moonFactorByLat(lat, mAlt), 0.6);
-        cDay *= fMoon;
-
-        cDay = clamp(cDay, 0, 10);
-
-        const lab = label72(cDay);
-
-        const basis = [];
-        if (kpMax != null) basis.push(`能量背景：Kp峰值≈${round1(kpMax)}`);
-        else basis.push(`能量背景：Kp暂无有效数据（保守评估）`);
-
-        basis.push(`日冕洞与日冕物质抛射模型：以 Kp 作为能量背景代理（值越高越有戏）`);
-        basis.push(`太阳风送达能力综合模型：当前 ${del.count}/3（Bt/速度/密度）`);
-
-        if (clouds.ok && clouds.data) {
-          const win = bestCloudHourForDay(clouds.data, d);
-          if (win) basis.push(`云量更佳点：${win.hh}:00（Low≈${win.low}% Mid≈${win.mid}% High≈${win.high}%）`);
-          else basis.push(`云量：暂无可用点（保守）`);
-        } else {
-          basis.push(`云量：暂无可用数据（保守）`);
-        }
-
-        tbody.push(`
-          <tr>
-            <td>${key}</td>
-            <td>${badgeHTML(lab.t, lab.cls)}</td>
-            <td>${scoreHTML(cDay)}</td>
-            <td class="muted2">${basis.map(x => `• ${escapeHTML(x)}`).join("<br/>")}</td>
-          </tr>
-        `);
-      });
-
-      safeHTML($("daysBody"), tbody.join(""));
-      if (softWarnings.length) {
-          setStatusText(`已生成（部分数据缺失：${softWarnings.join(" / ")}，已自动保守）。`);
-        } else {
-          setStatusText("已生成。");
-        }
-      
-    } catch (err) {
-    console.error(err);
-    setStatusText("生成失败，已使用可用数据。");
-    } finally {
-    setRunBusy(false);
-    }
-      console.error("[AuroraCapture] run error:", err);
-      setStatusText("生成失败：请打开控制台查看错误。");
-    }
-  }
-
-  // ---------- binding ----------
-  function initTabs(){
-  const tabs = Array.from(document.querySelectorAll(".tabs .tab"));
-  const panes = Array.from(document.querySelectorAll(".pane"));
-
-  if(!tabs.length || !panes.length) return;
-
-  const activate = (id) => {
-    tabs.forEach(t => t.classList.toggle("active", t.dataset.tab === id));
-    panes.forEach(p => p.classList.toggle("active", p.id === id));
-  };
-
-  // 默认：用 HTML 里带 active 的 tab，没有就第一个
-  const defaultTab = tabs.find(t => t.classList.contains("active")) || tabs[0];
-  activate(defaultTab.dataset.tab);
-
-  tabs.forEach(t => t.addEventListener("click", () => activate(t.dataset.tab)));
-}
-
-function bootstrap() {
-  console.log("[AuroraCapture] v2.4.2 bootstrap");
-
-  // defaults
-  const latEl = $("lat");
-  const lonEl = $("lon");
-  if (latEl && !latEl.value) latEl.value = "53.47";
-  if (lonEl && !lonEl.value) lonEl.value = "122.35";
-
-  // tabs
-  initTabs();
-
-  // buttons
-  const btnRun = $("btnRun");
-  if (btnRun) btnRun.addEventListener("click", run);
-
-  const btnMag = $("btnMag");
-  if (btnMag) btnMag.addEventListener("click", () => {
-    const lat = Number(latEl?.value);
-    const lon = Number(lonEl?.value);
+    const lat = Number($("lat")?.value);
+    const lon = Number($("lon")?.value);
     if (!isFinite(lat) || !isFinite(lon)) {
       setStatusText("请先输入有效经纬度。");
       return;
     }
-    const m = approxMagLat(lat, lon);
-    alert(`磁纬约 ${round1(m)}°`);
-  });
+    if (!window.SunCalc) {
+      setStatusText("关键计算模块未加载（SunCalc）。");
+      return;
+    }
 
-  // basic DOM sanity
-  const must = ["lat", "lon", "statusText", "statusDots"];
-  const missing = must.filter(id => !$(id));
-  if (missing.length) {
-    console.warn("[AuroraCapture] missing DOM ids:", missing);
-    setStatusText("页面组件缺失：请检查 HTML 的 id 是否一致。");
+    setStatusText("拉取数据中…");
+    setStatusDots([
+      { level: "warn", text: "NOAA 拉取中" },
+      { level: "warn", text: "Kp 拉取中" },
+      { level: "warn", text: "云量拉取中" },
+      { level: "warn", text: "OVATION 拉取中" },
+    ]);
+
+    // 地理门槛：不解释，直接输出不可观测
+    if (abs(lat) < 50) {
+      $("oneHeroLabel") && ($("oneHeroLabel").textContent = "不可观测");
+      $("oneHeroMeta") && ($("oneHeroMeta").textContent = "—");
+      $("swLine") && ($("swLine").textContent = "V — ｜ Bt — ｜ Bz — ｜ N —");
+      $("swMeta") && ($("swMeta").textContent = "—");
+
+      renderChart(["+10m", "+20m", "+30m", "+40m", "+50m", "+60m"], [1,1,1,1,1,1]);
+
+      $("threeState") && ($("threeState").textContent = "静默");
+      $("threeHint") && ($("threeHint").textContent = "—");
+      $("threeDeliver") && ($("threeDeliver").textContent = "—");
+      $("threeDeliverMeta") && ($("threeDeliverMeta").textContent = "—");
+      $("threeClouds") && ($("threeClouds").textContent = "Low —% ｜ Mid —% ｜ High —%");
+
+      $("daysBody") && ($("daysBody").innerHTML = `<tr><td colspan="4" class="muted">不可观测。</td></tr>`);
+      setStatusDots([
+        { level: "ok", text: "NOAA —" },
+        { level: "ok", text: "Kp —" },
+        { level: "ok", text: "云量 —" },
+        { level: "ok", text: "OVATION —" },
+      ]);
+      setStatusText("已生成。");
+      return;
+    }
+
+    const [noaa, kp, clouds, ova] = await Promise.all([
+      fetchSWPC2h(),
+      fetchKp(),
+      fetchClouds(lat, lon),
+      fetchOvation()
+    ]);
+
+    setStatusDots([
+      { level: noaa.ok ? "ok" : "bad", text: noaa.note || "NOAA" },
+      { level: kp.ok ? "ok" : "bad", text: kp.note || "Kp" },
+      { level: clouds.ok ? "ok" : "bad", text: clouds.note || "云量" },
+      { level: ova.ok ? "ok" : "bad", text: ova.note || "OVATION" },
+    ]);
+
+    // 弱提示：汇总缺失项
+    const missing = [];
+    const sw = noaa.data;
+
+    if (!sw) missing.push("NOAA 上游数据");
+    else {
+      if (sw.bz == null) missing.push("Bz");
+      if (sw.bt == null) missing.push("Bt");
+      if (sw.v == null) missing.push("速度V");
+      if (sw.n == null) missing.push("密度N");
+    }
+    if (!clouds.ok || !clouds.data) missing.push("云量");
+    if (!kp.ok || !kp.data) missing.push("Kp");
+    if (!ova.ok || !ova.data) missing.push("OVATION");
+
+    if (missing.length) {
+      setWeakWarn(`已生成（部分数据缺失：${missing.join(" / ")}，已自动按更保守方式估计）`);
+    }
+
+    // 没有 NOAA：仍然给一个最保守输出，且不让页面“无内容”
+    if (!sw) {
+      $("oneHeroLabel") && ($("oneHeroLabel").textContent = "不可观测");
+      $("oneHeroMeta") && ($("oneHeroMeta").textContent = `本地时间：${fmtYMDHM(now())}`);
+      $("swLine") && ($("swLine").textContent = "V — ｜ Bt — ｜ Bz — ｜ N —");
+      $("swMeta") && ($("swMeta").textContent = "—");
+      renderChart(["+10m", "+20m", "+30m", "+40m", "+50m", "+60m"], [1,1,1,1,1,1]);
+      setStatusText("已生成。");
+      return;
+    }
+
+    // 展示上游（允许 Bz 为 null）
+    const vTxt = sw.v == null ? "—" : roundInt(sw.v);
+    const btTxt = sw.bt == null ? "—" : roundInt(sw.bt);
+    const bzTxt = sw.bz == null ? "—" : roundInt(sw.bz);
+    const nTxt = sw.n == null ? "—" : roundInt(sw.n);
+
+    $("swLine") && ($("swLine").textContent = `V ${vTxt} ｜ Bt ${btTxt} ｜ Bz ${bzTxt} ｜ N ${nTxt}`);
+    $("swMeta") && ($("swMeta").textContent = sw.time_tag ? `NOAA 时间：${sw.time_tag}` : "—");
+
+    const mlat = approxMagLat(lat, lon);
+    const base = baseScoreFromSW(sw);
+    const baseDate = now();
+
+    // 1h：10分钟粒度，输出 1–5
+    const labels = [];
+    const vals = [];
+
+    let heroScore5 = 1;
+    for (let i = 0; i < 6; i++) {
+      const d = new Date(baseDate.getTime() + (i + 1) * 10 * 60000);
+
+      const gate = obsGate(d, lat, lon);
+      const moonAlt = getMoonAltDeg(d, lat, lon);
+      const moonF = moonFactorByLat(lat, moonAlt);
+
+      const latBoost = clamp((mlat - 55) / 12, 0, 1); // 55~67
+      const latF = 0.85 + latBoost * 0.15;
+
+      const decay = Math.pow(0.92, i);
+      let c = base * decay; // 0-10 连续分
+
+      if (gate.hardBlock) {
+        c = 0;
+      } else {
+        if (!gate.inWindow) c *= 0.55;
+        c *= moonF;
+        c *= latF;
+      }
+
+      c = clamp(c, 0, 10);
+      const s5 = score5FromC(c);
+
+      labels.push(fmtHM(d));
+      vals.push(s5);
+
+      if (i === 0) heroScore5 = s5;
+    }
+
+    const heroLab = labelFromScore5(heroScore5);
+    $("oneHeroLabel") && ($("oneHeroLabel").textContent = heroLab.t);
+    $("oneHeroMeta") && ($("oneHeroMeta").textContent =
+      `本地时间：${fmtYMDHM(baseDate)} ・ OVATION：${ova.ok ? (pickOvation(ova.data) ?? "—") : "—"}`
+    );
+
+    renderChart(labels, vals);
+
+    // 3h：状态机（保持你原逻辑）
+    let s3 = state3h(sw);
+    const del = deliverModel(sw);
+
+    const g3 = obsGate(baseDate, lat, lon);
+    const moonAlt3 = getMoonAltDeg(baseDate, lat, lon);
+    const moonF3 = moonFactorByLat(lat, moonAlt3);
+
+    let s3score = s3.score;
+    if (g3.hardBlock) s3score = 0;
+    else {
+      if (!g3.inWindow) s3score *= 0.65;
+      s3score *= moonF3;
+    }
+
+    // 如果 1h 已不可观测，3h 不允许出现过强建议（避免割裂）
+    if (heroScore5 === 1) {
+      if (s3.state === "爆发进行中") s3 = { ...s3, state: "爆发概率上升", hint: "—" };
+      if (s3.state === "爆发概率上升") s3 = { ...s3, state: "爆发后衰落期", hint: "—" };
+    }
+    if (s3score < 3.2) s3 = { ...s3, state: "静默", hint: "—" };
+    else if (s3score < 5.0 && s3.state === "爆发进行中") s3 = { ...s3, state: "爆发概率上升", hint: "—" };
+
+    $("threeState") && ($("threeState").textContent = s3.state);
+    $("threeHint") && ($("threeHint").textContent = s3.hint || "—");
+    $("threeDeliver") && ($("threeDeliver").textContent = `${del.count}/3 成立`);
+    $("threeDeliverMeta") && ($("threeDeliverMeta").textContent =
+      `Bt平台${del.okBt ? "✅" : "⚠️"} ・ 速度背景${del.okV ? "✅" : "⚠️"} ・ 密度结构${del.okN ? "✅" : "⚠️"}`
+    );
+
+    let cloudBest = null;
+    if (clouds.ok && clouds.data) cloudBest = bestCloud3h(clouds.data, baseDate);
+    $("threeClouds") && ($("threeClouds").textContent =
+      cloudBest ? `Low ${cloudBest.low}% ｜ Mid ${cloudBest.mid}% ｜ High ${cloudBest.high}%`
+                : `Low —% ｜ Mid —% ｜ High —%`
+    );
+
+    // 72h：按天输出，C值同样变成 1–5（整数）
+    const days = next3DaysLocal(baseDate);
+    const kpMap = kp.ok ? kpMaxByDay(kp.data) : null;
+
+    const tbody = [];
+    days.forEach(d => {
+      const key = fmtYMD(d);
+      const kpMax = kpMap?.get(key) ?? null;
+
+      const sKp = kpMax == null ? 0.45 : clamp((kpMax - 3.5) / (7.0 - 3.5), 0, 1);
+      const sDel = del.count / 3;
+      const sCloud = scoreCloudDay(clouds.ok ? clouds.data : null, d);
+
+      let cDay = (sKp * 0.48 + sDel * 0.32 + sCloud * 0.20) * 10;
+
+      const nightRatio = estimateNightRatio(d, lat, lon);
+      cDay *= (0.55 + nightRatio * 0.45);
+
+      const mAlt = getMoonAltDeg(new Date(d.getTime() + 12 * 3600 * 1000), lat, lon);
+      const fMoon = soften(moonFactorByLat(lat, mAlt), 0.6);
+      cDay *= fMoon;
+
+      cDay = clamp(cDay, 0, 10);
+      const score5 = score5FromC(cDay);
+      const lab = labelFromScore5(score5);
+
+      const basis = [];
+      if (kpMax != null) basis.push(`能量背景：Kp峰值≈${roundInt(kpMax)}`);
+      else basis.push(`能量背景：Kp暂无有效数据（保守评估）`);
+
+      basis.push(`日冕洞与日冕物质抛射模型：以 Kp 作为能量背景代理（值越高越有戏）`);
+      basis.push(`太阳风送达能力综合模型：当前 ${del.count}/3（Bt/速度/密度）`);
+
+      if (clouds.ok && clouds.data) {
+        const win = bestCloudHourForDay(clouds.data, d);
+        if (win) basis.push(`云量更佳点：${win.hh}:00（Low≈${win.low}% Mid≈${win.mid}% High≈${win.high}%）`);
+        else basis.push(`云量：暂无可用点（保守）`);
+      } else {
+        basis.push(`云量：暂无可用数据（保守）`);
+      }
+
+      tbody.push(`
+        <tr>
+          <td>${key}</td>
+          <td>${badgeHTML(lab.t, lab.cls)}</td>
+          <td>${scoreHTML(score5)}</td>
+          <td class="muted2">${basis.map(x => `• ${escapeHTML(x)}`).join("<br/>")}</td>
+        </tr>
+      `);
+    });
+
+    $("daysBody") && ($("daysBody").innerHTML = tbody.join(""));
+    setStatusText("已生成。");
   }
-}
 
-document.addEventListener("DOMContentLoaded", bootstrap);
+  // ---------- bind ----------
+  function bindButtons() {
+    const btnRun = $("btnRun");
+    const btnMag = $("btnMag");
+
+    if (btnRun) btnRun.addEventListener("click", run);
+
+    if (btnMag) {
+      btnMag.addEventListener("click", () => {
+        const lat = Number($("lat")?.value);
+        const lon = Number($("lon")?.value);
+        if (!isFinite(lat) || !isFinite(lon)) {
+          setStatusText("请先输入有效经纬度。");
+          return;
+        }
+        const m = approxMagLat(lat, lon);
+        alert(`磁纬约 ${roundInt(m)}°`);
+      });
+    }
+  }
+
+  // ---------- bootstrap (only once) ----------
+  function bootstrap() {
+    console.log("[AuroraCapture] v2.4.3 bootstrap");
+
+    // defaults
+    if ($("lat") && !$("lat").value) $("lat").value = "53.47";
+    if ($("lon") && !$("lon").value) $("lon").value = "122.35";
+
+    initTabs();
+    bindButtons();
+
+    // sanity
+    const must = ["lat", "lon", "statusText", "statusDots", "btnRun", "btnMag"];
+    const missing = must.filter(id => !$(id));
+    if (missing.length) {
+      console.warn("[AuroraCapture] missing DOM ids:", missing);
+      setStatusText("页面组件缺失：请检查 HTML 的 id 是否一致。");
+      setWeakWarn(`缺失组件：${missing.join(" / ")}`);
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    try {
+      bootstrap();
+    } catch (e) {
+      console.error("[AuroraCapture] bootstrap error:", e);
+      setStatusText("初始化失败：请打开控制台查看错误。");
+    }
+  });
+})();
