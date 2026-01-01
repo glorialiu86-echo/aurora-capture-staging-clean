@@ -329,13 +329,13 @@ async function run(){
   const lon = Number($('lon').value);
   const tz = $('tz').value;
   const localTime = $('localTime').value.trim();
-  // —— 磁纬下限硬门槛（摄影现实）——
-  const mlat = approxMagLat(lat, lon);
-  if (Math.abs(mlat) < 55) {
-    alert(`磁纬约 ${mlat.toFixed(1)}°，低于摄影可行下限（55°）。\n该纬度基本不可能拍到极光，直接判「放弃」。`);
-    setStatus(`放弃：磁纬 ${mlat.toFixed(1)}° < 55°`);
-    return;
-  }
+  // —— 摄影经验纬度下限（地理纬度）——
+const alat = Math.abs(lat);
+if (alat < 55) {
+  alert(`地理纬度 ${alat.toFixed(1)}°，低于摄影可行下限（55°）。\n该纬度仅在极端太阳风暴下才可能可见，默认判「放弃」。`);
+  setStatus(`放弃：地理纬度 ${alat.toFixed(1)}° < 55°`);
+  return;
+}
   
   if (!Number.isFinite(lat) || lat < -90 || lat > 90) {
     alert('纬度应在 -90 到 90'); return;
