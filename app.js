@@ -579,7 +579,7 @@
         setStatusText("关键计算模块未加载（SunCalc）。");
         return;
       }
-
+      const softWarnings = [];
       setStatusText("拉取数据中…");
       setStatusDots([
         { level: "warn", text: "NOAA 拉取中" },
@@ -617,7 +617,22 @@
         fetchClouds(lat, lon),
         fetchOvation()
       ]);
-
+      // 统计弱提示：哪个源掉了 / 哪个关键字段缺了
+        if (!noaa.ok) softWarnings.push("NOAA");
+        if (!kp.ok) softWarnings.push("Kp");
+        if (!clouds.ok) softWarnings.push("云量");
+        if (!ova.ok) softWarnings.push("OVATION");
+        
+        const sw = noaa.data;
+        if (sw) {
+          if (sw.bz == null) softWarnings.push("Bz");
+          if (sw.bt == null) softWarnings.push("Bt");
+          if (sw.v  == null) softWarnings.push("V");
+          if (sw.n  == null) softWarnings.push("N");
+        } else {
+          // NOAA 没数据但如果还有缓存/兜底，你也能提醒一句
+          softWarnings.push("上游参数");
+        }
       setStatusDots([
         { level: noaa.ok ? "ok" : "bad", text: noaa.note || "NOAA" },
         { level: kp.ok ? "ok" : "bad", text: kp.note || "Kp" },
@@ -625,7 +640,6 @@
         { level: ova.ok ? "ok" : "bad", text: ova.note || "OVATION" },
       ]);
 
-      const sw = noaa.data;
       if (!sw) {
         safeText($("oneHeroLabel"), "不可观测");
         safeText($("oneHeroMeta"), "—");
@@ -778,7 +792,12 @@
       });
 
       safeHTML($("daysBody"), tbody.join(""));
-      setStatusText("已生成。");
+      if (softWarnings.length) {
+          setStatusText(`已生成（部分数据缺失：${softWarnings.join(" / ")}，已自动保守）。`);
+        } else {
+          setStatusText("已生成。");
+        }
+      
     } catch (err) {
     console.error(err);
     setStatusText("生成失败，已使用可用数据。");
@@ -809,51 +828,41 @@
   tabs.forEach(t => t.addEventListener("click", () => activate(t.dataset.tab)));
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+function bootstrap() {
+  console.log("[AuroraCapture] v2.4.2 bootstrap");
+
+  // defaults
+  const latEl = $("lat");
+  const lonEl = $("lon");
+  if (latEl && !latEl.value) latEl.value = "53.47";
+  if (lonEl && !lonEl.value) lonEl.value = "122.35";
+
+  // tabs
   initTabs();
 
-  // default values
-  const latEl = document.getElementById("lat");
-  const lonEl = document.getElementById("lon");
-  if(latEl && !latEl.value) latEl.value = "53.47";
-  if(lonEl && !lonEl.value) lonEl.value = "122.35";
+  // buttons
+  const btnRun = $("btnRun");
+  if (btnRun) btnRun.addEventListener("click", run);
 
-  // bind buttons
-  const btnRun = document.getElementById("btnRun");
-  if(btnRun) btnRun.addEventListener("click", run);
-
-  const btnMag = document.getElementById("btnMag");
-  if(btnMag) btnMag.addEventListener("click", () => {
+  const btnMag = $("btnMag");
+  if (btnMag) btnMag.addEventListener("click", () => {
     const lat = Number(latEl?.value);
     const lon = Number(lonEl?.value);
-    if(!isFinite(lat) || !isFinite(lon)){
+    if (!isFinite(lat) || !isFinite(lon)) {
       setStatusText("请先输入有效经纬度。");
       return;
     }
     const m = approxMagLat(lat, lon);
     alert(`磁纬约 ${round1(m)}°`);
   });
-});
 
-  function bootstrap() {
-    console.log("[AuroraCapture] v2.4.2 bootstrap");
-
-    // defaults
-    if ($("lat") && !$("lat").value) $("lat").value = "53.47";
-    if ($("lon") && !$("lon").value) $("lon").value = "122.35";
-
-    initTabs();
-    bindRunButton();
-    bindMagButton();
-
-    // basic DOM sanity
-    const must = ["lat", "lon", "statusText", "statusDots"];
-    const missing = must.filter(id => !$(id));
-    if (missing.length) {
-      console.warn("[AuroraCapture] missing DOM ids:", missing);
-      setStatusText("页面组件缺失：请检查 HTML 的 id 是否一致。");
-    }
+  // basic DOM sanity
+  const must = ["lat", "lon", "statusText", "statusDots"];
+  const missing = must.filter(id => !$(id));
+  if (missing.length) {
+    console.warn("[AuroraCapture] missing DOM ids:", missing);
+    setStatusText("页面组件缺失：请检查 HTML 的 id 是否一致。");
   }
+}
 
-  document.addEventListener("DOMContentLoaded", bootstrap);
-})();
+document.addEventListener("DOMContentLoaded", bootstrap);
