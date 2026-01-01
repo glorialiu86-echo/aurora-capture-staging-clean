@@ -1,3 +1,5 @@
+const HORIZON_HOURS = 48;
+
 // ====== 工具：DOM ======
 const $ = (id) => document.getElementById(id);
 function setStatus(msg){ $('status').textContent = msg || ''; }
@@ -562,12 +564,9 @@ async function run(){
     // 低纬默认放弃（你现在门槛 50）
     if (absLat < 50){
       setStatus(`低纬（地理纬度 ${absLat.toFixed(1)}° < 50°）：默认放弃`);
-      const hoursUTC = Array.from({length:72}, (_,i)=> addHours(T0, i));
-      const scores = Array(72).fill(0);
-      const details = Array(72).fill([
-        `【纬度】${absLat.toFixed(1)}° < 50°`,
-        '【结论】默认放弃（仅极端历史级事件才可能）'
-      ]);
+      const hoursUTC = Array.from({length:HORIZON_HOURS}, (_,i)=> addHours(T0, i));
+const scores = Array(HORIZON_HOURS).fill(0);
+const details = Array(HORIZON_HOURS).fill([ ... ]);
       renderLegend();
       renderTable(hoursUTC, tz, scores, details);
       return;
@@ -576,7 +575,7 @@ async function run(){
     const notes = [];
     const [swpc, clouds] = await Promise.all([
       fetchSWPC2h(notes),
-      fetchClouds(lat, lon, T0, 72, tz, notes)
+      fetchClouds(lat, lon, T0, HORIZON_HOURS, tz, notes)
     ]);
 
     // 页面数据健康提示（不弹窗）
@@ -585,13 +584,13 @@ async function run(){
     const features = swpc?.series ? computeSolarFeatures(swpc.series) : null;
 
     const band = latBand(absLat);
-    const hoursUTC = Array.from({length:72}, (_,i)=> addHours(T0, i));
+    const hoursUTC = Array.from({length:HORIZON_HOURS}, (_,i)=> addHours(T0, i));
 
     // 云量缺失：仍可画表，但天空项会保守（当作偏差，容易低分）
     const scores = [];
     const details = [];
 
-    for (let i=0;i<72;i++){
+    for (let i=0;i<HORIZON_HOURS;i++){
       const cloud = clouds?.[i] ?? { low: NaN, mid: NaN, high: NaN };
       const r = computeHourlyScore({ band, cloud, features });
       scores.push(r.score);
