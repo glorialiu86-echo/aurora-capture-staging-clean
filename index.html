@@ -3,17 +3,17 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>aurora-decision v2.1</title>
+  <title>aurora-decision v2.2</title>
   <link rel="stylesheet" href="./style.css" />
 </head>
 <body>
   <div class="wrap">
     <header class="top">
       <div>
-        <h1>aurora-decision <span class="tag">v2.1</span></h1>
+        <h1>aurora-decision <span class="tag">v2.2</span></h1>
         <p class="sub">
           输入经纬度，一键生成：<b>1小时精准(10min)</b>｜<b>3小时概率态</b>｜<b>72小时范围(按天)</b>。
-          时间自动读取设备本地时间。
+          已加入太阳高度：<b>太阳高度>0° 一票否决</b>；夜窗以 <b>-12°</b> 为可拍门槛。
         </p>
       </div>
       <div class="right">
@@ -47,36 +47,32 @@
       </details>
     </section>
 
-    <!-- Tabs -->
     <section class="tabs">
       <button class="tab active" data-tab="t1h">1小时精准</button>
       <button class="tab" data-tab="t3h">3小时概率态</button>
       <button class="tab" data-tab="t72h">72小时范围</button>
     </section>
 
-    <!-- Panels -->
     <section id="t1h" class="panel active">
       <h2>① 1小时精准预测（10分钟粒度）</h2>
       <div id="out1h" class="out"></div>
+      <div id="legend1h" class="legend"></div>
     </section>
 
     <section id="t3h" class="panel">
       <h2>② 3小时概率预测（状态机）</h2>
       <div id="out3h" class="out"></div>
+      <div id="legend3h" class="legend"></div>
     </section>
 
     <section id="t72h" class="panel">
       <h2>③ 72小时范围预测（按天）</h2>
       <div id="out72h" class="out"></div>
+      <div id="legend72h" class="legend"></div>
     </section>
 
-    <!-- Explain (small) -->
-    <section id="explain" class="explain"></section>
-
     <footer class="footer">
-      <small>
-        数据源：NOAA SWPC（OVATION nowcast、实时太阳风、Kp 预报）与 Open-Meteo 云量预报。
-      </small>
+      <small>数据源：NOAA SWPC（OVATION nowcast、实时太阳风、Kp 预报）与 Open-Meteo 云量预报。</small>
     </footer>
   </div>
 
