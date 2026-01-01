@@ -2,53 +2,59 @@
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Aurora Capture 极光捕网</title>
   <link rel="stylesheet" href="./style.css?v=24" />
+  <!-- SunCalc: 太阳/月亮高度（仅后台计算，不在前台露出） -->
+  <script src="https://unpkg.com/suncalc@1.9.0/suncalc.js"></script>
+  <!-- Chart.js: 1小时 C值柱状图 -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
 <body>
-  <div class="bg"></div>
-
-  <main class="wrap">
-    <header class="hero">
+  <div class="wrap">
+    <header class="head">
       <div class="brand">
         <div class="logo">🕸️</div>
-        <div>
-          <div class="title">Aurora Capture <span class="ver">v2.4</span></div>
+        <div class="titleBlock">
+          <div class="titleRow">
+            <h1>Aurora Capture <span class="cn">极光捕网</span></h1>
+            <span class="ver">v2.4</span>
+          </div>
           <div class="subtitle">输入经纬度 → 生成关于极光可见性/可拍性的即时预测（1小时 / 3小时 / 72小时）</div>
         </div>
       </div>
     </header>
 
-    <section class="card inputCard">
+    <section class="card topCard">
       <div class="grid2">
         <label class="field">
-          <div class="lab">纬度 Latitude</div>
+          <span class="label">纬度 Latitude</span>
           <input id="lat" type="number" step="0.0001" placeholder="例如 53.47" />
         </label>
-
         <label class="field">
-          <div class="lab">经度 Longitude</div>
+          <span class="label">经度 Longitude</span>
           <input id="lon" type="number" step="0.0001" placeholder="例如 122.35" />
         </label>
       </div>
 
-      <div class="row">
-        <button id="runBtn" class="btn primary">生成即时预测</button>
-        <button id="magBtn" class="btn">转换磁纬度</button>
-        <div class="hint">提示：经纬度可在 Google/Apple/高德地图的“位置详情”里复制。</div>
+      <div class="row actions">
+        <button id="btnRun" class="btn primary">生成即时预测</button>
+        <button id="btnMag" class="btn">转换磁纬度</button>
+        <div class="hint">提示：经纬度可在 Google/Apple/高德地图“位置详情”里复制。</div>
       </div>
 
       <details class="faq">
         <summary>如何查看经纬度？</summary>
         <div class="faqBody">
-          在 Google / Apple / 高德地图：长按你的位置 → 详情里会显示“纬度、经度”。复制填入即可。
+          在 Google / Apple / 高德地图里：长按你的位置 → 详情会显示“纬度、经度”。复制到这里即可。
         </div>
       </details>
 
-      <div class="statusLine" id="statusLine">
-        <span class="dot idle"></span>
-        <span id="statusText">等待输入经纬度。</span>
+      <div class="row statusRow">
+        <div class="statusDots" id="statusDots">
+          <!-- 动态填充 -->
+        </div>
+        <div class="statusText" id="statusText">等待生成。</div>
       </div>
     </section>
 
@@ -58,138 +64,119 @@
       <button class="tab" data-tab="t72">72小时范围</button>
     </section>
 
-    <!-- 1H -->
-    <section class="tabPanel active" id="t1">
+    <!-- 1小时 -->
+    <section id="t1" class="pane active">
       <div class="gridCards">
-        <div class="card bigCard">
-          <div class="kicker">当前建议（1小时内，10分钟粒度）</div>
-          <div class="bigConclusion" id="c1_now">—</div>
-          <div class="meta" id="c1_meta">本地时间：—</div>
+        <div class="card hero">
+          <div class="k">当前建议（1小时内，10分钟粒度）</div>
+          <div class="big" id="oneHeroLabel">—</div>
+          <div class="small" id="oneHeroMeta">—</div>
         </div>
 
-        <div class="card bigCard">
-          <div class="kicker">上游实况（近实时）</div>
-          <div class="bigNums" id="sw_now">V — ｜ Bt — ｜ Bz — ｜ N —</div>
-          <div class="meta" id="sw_meta">数据时间：—</div>
+        <div class="card hero">
+          <div class="k">上游实况（近实时）</div>
+          <div class="mono big2" id="swLine">V — ｜ Bt — ｜ Bz — ｜ N —</div>
+          <div class="small" id="swMeta">—</div>
         </div>
       </div>
 
       <div class="card chartCard">
         <div class="chartHead">
           <div>
-            <div class="kicker">1小时 C值柱状图</div>
-            <div class="meta">横轴：时间（本地）｜纵轴：C值（0-10，Capture）</div>
+            <div class="k">1小时 C值（Capture）柱状图</div>
+            <div class="small">C值范围 0–10，越高越建议投入。</div>
           </div>
-          <div class="chip" id="c1_chip">—</div>
+          <div class="pill">单位：10分钟</div>
         </div>
-        <canvas id="cChart" height="220"></canvas>
-
-        <div class="chartFoot">
-          <div class="miniTitle">点击柱子查看该时刻结论：</div>
-          <div class="chartPick" id="chartPick">—</div>
+        <div class="chartWrap">
+          <canvas id="cChart"></canvas>
         </div>
       </div>
 
-      <div class="card noteCard">
-        <div class="miniTitle">1小时结论分级（5档）</div>
+      <div class="card explain">
+        <div class="k">1小时结论分级（5档）</div>
         <ul class="bullets">
-          <li><b>不可观测</b>：无需行动。</li>
-          <li><b>低概率</b>：可以看一眼，但不建议投入太多成本。</li>
-          <li><b>可蹲守</b>：条件有戏，建议准备设备，盯数据与变化。</li>
-          <li><b>值得出门</b>：建议到位开拍/观测。</li>
-          <li><b>强烈推荐</b>：很值得冲，尽快行动。</li>
+          <li><b>强烈推荐</b>：投入回报高，建议立即行动。</li>
+          <li><b>值得出门</b>：条件不错，建议准备与试拍。</li>
+          <li><b>可蹲守</b>：存在机会，建议架机等待触发。</li>
+          <li><b>低概率</b>：机会小，可低成本尝试。</li>
+          <li><b>不可观测</b>：当前时段不建议投入。</li>
         </ul>
       </div>
     </section>
 
-    <!-- 3H -->
-    <section class="tabPanel" id="t3">
+    <!-- 3小时 -->
+    <section id="t3" class="pane">
       <div class="gridCards">
-        <div class="card bigCard">
-          <div class="kicker">系统状态（未来3小时，不分分钟）</div>
-          <div class="bigConclusion" id="s3_state">—</div>
-          <div class="meta" id="s3_meta">—</div>
+        <div class="card hero">
+          <div class="k">当前系统状态（未来3小时不分分钟）</div>
+          <div class="big" id="threeState">—</div>
+          <div class="small" id="threeHint">—</div>
         </div>
 
-        <div class="card bigCard">
-          <div class="kicker">本地建议（3小时）</div>
-          <div class="bigConclusion" id="s3_local">—</div>
-          <div class="meta">（完全等同于 1小时“当前建议”）</div>
+        <div class="card hero">
+          <div class="k">太阳风送达能力综合模型</div>
+          <div class="big2" id="threeDeliver">—</div>
+          <div class="small" id="threeDeliverMeta">—</div>
         </div>
 
-        <div class="card bigCard">
-          <div class="kicker">送达能力综合模型</div>
-          <div class="bigNums" id="p2_now">—</div>
-          <div class="meta" id="p2_meta">—</div>
-        </div>
-
-        <div class="card bigCard">
-          <div class="kicker">云量条件（未来3小时）</div>
-          <div class="bigNums" id="cloud3">Low —% ｜ Mid —% ｜ High —%</div>
-          <div class="meta" id="cloud3_meta">更佳参考：中云 ≤ 50%（越低越好），高云 ≤ 80%（薄幕可接受）</div>
+        <div class="card hero">
+          <div class="k">云量条件（未来3小时）</div>
+          <div class="mono big2" id="threeClouds">Low —% ｜ Mid —% ｜ High —%</div>
+          <div class="small" id="threeCloudHint">更佳参考：中云 ≤50%（越低越好）；高云 ≤80%（薄幕可接受）。</div>
         </div>
       </div>
 
-      <div class="card noteCard">
-        <div class="miniTitle">3小时状态分级（4态）</div>
+      <div class="card explain">
+        <div class="k">3小时状态分级（4态）</div>
         <ul class="bullets">
           <li><b>爆发进行中</b>：触发更明确，短时内值得马上看。</li>
-          <li><b>爆发概率上升</b>：系统更容易发生，但未到稳定触发。</li>
-          <li><b>爆发后衰落期</b>：刚过峰值，仍可能残留但总体走弱。</li>
-          <li><b>静默</b>：背景不足，先别投入。</li>
+          <li><b>爆发概率上升</b>：系统更容易发生，但未到持续触发。</li>
+          <li><b>爆发后衰落期</b>：刚有过波动，仍可能余震一会儿。</li>
+          <li><b>静默</b>：背景不足或触发不清晰，先别投入。</li>
         </ul>
       </div>
     </section>
 
-    <!-- 72H -->
-    <section class="tabPanel" id="t72">
+    <!-- 72小时 -->
+    <section id="t72" class="pane">
       <div class="card">
-        <div class="tableTitle">72小时范围预测（按天）</div>
+        <div class="k">72小时范围预测（按天）</div>
+        <div class="small">按天给“可能性区间”，不细到具体时刻；更细的时间点交给 1小时 / 3小时模块。</div>
 
-        <!-- desktop table -->
-        <div class="tableWrap onlyDesk">
-          <table class="tbl" id="tbl72">
-            <colgroup>
-              <col style="width: 160px">
-              <col style="width: 120px">
-              <col style="width: 240px">
-              <col style="width: 220px">
-              <col style="width: auto">
-            </colgroup>
+        <div class="tableWrap">
+          <table class="tbl">
             <thead>
               <tr>
-                <th>日期（本地）</th>
-                <th>结论</th>
-                <th>日冕洞与日冕物质抛射模型</th>
-                <th>太阳风送达能力综合模型</th>
-                <th>云量与Kp背景</th>
+                <th class="colDate">日期（本地）</th>
+                <th class="colConclusion">结论</th>
+                <th class="colScore">C值</th>
+                <th class="colBasis">依据（人话）</th>
               </tr>
             </thead>
-            <tbody id="tbl72Body"></tbody>
+            <tbody id="daysBody">
+              <tr><td colspan="4" class="muted">等待生成。</td></tr>
+            </tbody>
           </table>
         </div>
-
-        <!-- mobile cards -->
-        <div class="mobileList onlyMobile" id="list72"></div>
       </div>
 
-      <div class="card noteCard">
-        <div class="miniTitle">72小时结论分级（按天）</div>
+      <div class="card explain">
+        <div class="k">72小时结论分级（按天）</div>
         <ul class="bullets">
-          <li><b>可能性高</b>：值得提前规划与占位。</li>
-          <li><b>有窗口</b>：有机会，重点看当天晚些时候的 1小时/3小时模块。</li>
-          <li><b>小概率</b>：机会小，除非本地条件极好才尝试。</li>
-          <li><b>低可能</b>：基本不建议投入。</li>
+          <li><b>可能性高</b>：能量背景+送达能力更强，值得提前规划。</li>
+          <li><b>有窗口</b>：存在机会，重点看云与当晚即时模块。</li>
+          <li><b>小概率</b>：机会少，除非位置/条件极佳。</li>
+          <li><b>低可能</b>：综合偏弱，提前投入意义不大。</li>
+          <li><b>不可观测</b>：不建议投入。</li>
         </ul>
       </div>
     </section>
 
-    <section class="card footCard">
-      <div class="foot">
-        数据源：NOAA SWPC（实时太阳风 / OVATION nowcast / Kp 预报）与 Open-Meteo 云量预报。
-      </div>
-    </section>
-  </main>
+    <footer class="foot">
+      数据源：NOAA SWPC（实时太阳风、OVATION nowcast、Kp 预报）与 Open-Meteo 云量预报。
+    </footer>
+  </div>
 
   <script src="./app.js?v=24"></script>
 </body>
