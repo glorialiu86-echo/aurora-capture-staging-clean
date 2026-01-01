@@ -8,22 +8,24 @@
  */
 
 const $ = (id) => document.getElementById(id);
-const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
-const round1 = (x) => Math.round(x * 10) / 10;
-const now = () => new Date();
-const abs = Math.abs;
 
 function setStatusDots(items){
   const box = $("statusDots");
+  if(!box) return;
   box.innerHTML = "";
-  items.forEach(it=>{
+  (items || []).forEach(it=>{
     const d = document.createElement("div");
     d.className = `dot ${it.level}`;
     d.textContent = it.text;
     box.appendChild(d);
   });
 }
-function setStatusText(t){ $("statusText").textContent = t; }
+
+function setStatusText(t){
+  const el = $("statusText");
+  if(!el) return;               
+  el.textContent = t;
+}
 
 function cacheSet(key, value){
   try{
@@ -396,6 +398,7 @@ let chart = null;
 
 function renderChart(labels, values){
   const ctx = $("cChart");
+  if(!ctx) return;        
   if(chart) chart.destroy();
 
   chart = new Chart(ctx, {
@@ -803,40 +806,60 @@ function estimateNightRatio(dayDate, lat, lon){
 }
 
 function initTabs(){
-  const btns = Array.from(document.querySelectorAll('.tab-btn'));
-  const panels = Array.from(document.querySelectorAll('.tab-panel'));
+  // ✅ 兼容两套 class：.tab-btn / .tab
+  const btns = Array.from(document.querySelectorAll('.tab-btn, .tab'));
+  // ✅ 兼容两套 panel：.tab-panel / .pane
+  const panels = Array.from(document.querySelectorAll('.tab-panel, .pane'));
 
   if (!btns.length || !panels.length) return;
 
-  const activate = (name) => {
-    btns.forEach(b => b.classList.toggle('active', b.dataset.tab === name));
-    panels.forEach(p => p.classList.toggle('active', p.dataset.panel === name));
+  const activate = (btn) => {
+    // 兼容 data-tab / data-panel / href="#id"
+    const name =
+      btn.dataset.tab ||
+      btn.dataset.panel ||
+      (btn.getAttribute("href") && btn.getAttribute("href").startsWith("#") ? btn.getAttribute("href").slice(1) : null);
+
+    btns.forEach(b => b.classList.remove('active'));
+    panels.forEach(p => p.classList.remove('active'));
+
+    btn.classList.add('active');
+
+    // panel 匹配：优先 id，其次 data-panel
+    const target =
+      (name && document.getElementById(name)) ||
+      panels.find(p => p.dataset.panel === name);
+
+    if(target) target.classList.add('active');
   };
 
-  // default: first tab
-  activate(btns[0].dataset.tab);
+  // 默认激活第一个
+  activate(btns[0]);
 
   btns.forEach(b => {
-    b.addEventListener('click', () => activate(b.dataset.tab));
+    b.addEventListener('click', (e) => {
+      e.preventDefault();
+      activate(b);
+    });
   });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  // tabs
   initTabs();
 
   // default values
-  if(!$("lat").value) $("lat").value = "53.47";
-  if(!$("lon").value) $("lon").value = "122.35";
+  if($("lat") && !$("lat").value) $("lat").value = "53.47";
+  if($("lon") && !$("lon").value) $("lon").value = "122.35";
 
-  // bind buttons (统一用 btnRun / btnMag)
-  const btnRun = $("btnRun");
-  if (btnRun) btnRun.addEventListener("click", run);
+  // ✅ 兼容两个 id：btnRun / runBtn
+  const runBtn = $("btnRun") || $("runBtn");
+  if (runBtn) runBtn.addEventListener("click", (e)=>{ e.preventDefault(); run(); });
 
-  const btnMag = $("btnMag");
-  if (btnMag) btnMag.addEventListener("click", ()=>{
-    const lat = Number($("lat").value);
-    const lon = Number($("lon").value);
+  const magBtn = $("btnMag") || $("magBtn");
+  if (magBtn) magBtn.addEventListener("click", (e)=>{
+    e.preventDefault();
+    const lat = Number($("lat")?.value);
+    const lon = Number($("lon")?.value);
     if(!isFinite(lat) || !isFinite(lon)){
       setStatusText("请先输入有效经纬度。");
       return;
