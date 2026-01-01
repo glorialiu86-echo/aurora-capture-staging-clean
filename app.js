@@ -444,17 +444,6 @@ function scoreHTML(v){
   return `<span class="scorePill">${round1(v)}</span>`;
 }
 
-function setupTabs(){
-  document.querySelectorAll(".tab").forEach(btn=>{
-    btn.addEventListener("click", ()=>{
-      document.querySelectorAll(".tab").forEach(b=>b.classList.remove("active"));
-      document.querySelectorAll(".pane").forEach(p=>p.classList.remove("active"));
-      btn.classList.add("active");
-      $(btn.dataset.tab).classList.add("active");
-    });
-  });
-}
-
 async function run(){
   const lat = Number($("lat").value);
   const lon = Number($("lon").value);
@@ -813,30 +802,6 @@ function estimateNightRatio(dayDate, lat, lon){
   return ok/total;
 }
 
-function attach(){
-  setupTabs();
-
-  $("btnRun").addEventListener("click", run);
-
-  $("btnMag").addEventListener("click", ()=>{
-    const lat = Number($("lat").value);
-    const lon = Number($("lon").value);
-    if(!isFinite(lat) || !isFinite(lon)){
-      setStatusText("请先输入有效经纬度。");
-      return;
-    }
-    const m = approxMagLat(lat, lon);
-    // 这条是你之前坚持要的弹窗（因为是“转换”动作），我保留
-    alert(`磁纬约 ${round1(m)}°`);
-  });
-
-  // 初始值（不强求）
-  if(!$("lat").value) $("lat").value = "53.47";
-  if(!$("lon").value) $("lon").value = "122.35";
-}
-
-attach();
-
 function initTabs(){
   const btns = Array.from(document.querySelectorAll('.tab-btn'));
   const panels = Array.from(document.querySelectorAll('.tab-panel'));
@@ -857,8 +822,26 @@ function initTabs(){
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  initTabs(); // 让选项卡能切换 + 默认只显示一个
+  // tabs
+  initTabs();
 
-  const runBtn = document.getElementById('runBtn');
-  if (runBtn) runBtn.addEventListener('click', run); // 让“生成即时预测”能点击执行
+  // default values
+  if(!$("lat").value) $("lat").value = "53.47";
+  if(!$("lon").value) $("lon").value = "122.35";
+
+  // bind buttons (统一用 btnRun / btnMag)
+  const btnRun = $("btnRun");
+  if (btnRun) btnRun.addEventListener("click", run);
+
+  const btnMag = $("btnMag");
+  if (btnMag) btnMag.addEventListener("click", ()=>{
+    const lat = Number($("lat").value);
+    const lon = Number($("lon").value);
+    if(!isFinite(lat) || !isFinite(lon)){
+      setStatusText("请先输入有效经纬度。");
+      return;
+    }
+    const m = approxMagLat(lat, lon);
+    alert(`磁纬约 ${round1(m)}°`);
+  });
 });
