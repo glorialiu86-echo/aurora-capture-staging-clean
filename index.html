@@ -13,15 +13,19 @@
 <body>
   <div class="wrap">
     <header class="head">
-      <div class="brand">
-        <div class="logo">🕸️</div>
-        <div class="titleBlock">
-          <div class="titleRow">
-            <h1>Aurora Capture <span class="cn">极光捕网</span></h1>
-            <span class="ver">v2.4.3</span>
+      <div class="brandRow">
+        <div class="brand">
+          <div class="logo">🕸️</div>
+          <div class="titleBlock">
+            <div class="titleRow">
+              <h1>Aurora Capture <span class="cn">极光捕网</span></h1>
+              <span class="ver">v2.5.0</span>
+            </div>
+            <div class="subtitle">输入经纬度 → 生成关于极光可见性/可拍性的即时预测（1小时 / 3小时 / 72小时）</div>
           </div>
-          <div class="subtitle">输入经纬度 → 生成关于极光可见性/可拍性的即时预测（1小时 / 3小时 / 72小时）</div>
         </div>
+
+        <button id="btnAbout" type="button" class="btn ghost">背景介绍</button>
       </div>
     </header>
 
@@ -39,7 +43,7 @@
 
       <div class="row actions">
         <button id="btnRun" type="button" class="btn primary">生成即时预测</button>
-        <button id="btnMag" class="btn">转换磁纬度</button>
+        <button id="btnMag" type="button" class="btn">转换磁纬度</button>
         <div class="hint">提示：经纬度可在 Google/Apple/高德地图“位置详情”里复制。</div>
       </div>
 
@@ -51,9 +55,7 @@
       </details>
 
       <div class="row statusRow">
-        <div class="statusDots" id="statusDots">
-          <!-- 动态填充 -->
-        </div>
+        <div class="statusDots" id="statusDots"></div>
         <div class="statusText" id="statusText">等待生成。</div>
       </div>
     </section>
@@ -84,7 +86,7 @@
         <div class="chartHead">
           <div>
             <div class="k">1小时 C值（Capture）柱状图</div>
-            <div class="small">C值范围 0–10，越高越建议投入。</div>
+            <div class="small">C值范围 1–5，越高越建议投入。</div>
           </div>
           <div class="pill">单位：10分钟</div>
         </div>
@@ -94,11 +96,11 @@
       </div>
 
       <div class="card explain">
-        <div class="k">1小时预测C值结论分级（5档）</div>
+        <div class="k">1小时预测结论分级（C值）</div>
         <ul class="bullets">
           <li><b>5分 强烈推荐</b>：投入回报高，建议立即行动。</li>
           <li><b>4分 值得出门</b>：条件不错，建议准备与试拍。</li>
-          <li><b>3分 可蹲守</b>：存在机会，建议架设机位等待触发。</li>
+          <li><b>3分 可蹲守</b>：存在机会，建议架机等待触发。</li>
           <li><b>2分 低概率</b>：机会小，可低成本尝试。</li>
           <li><b>1分 不可观测</b>：当前时段不建议投入。</li>
         </ul>
@@ -122,13 +124,13 @@
 
         <div class="card hero">
           <div class="k">云量条件（未来3小时）</div>
-          <div class="mono big2" id="threeClouds">Low —% ｜ Mid —% ｜ High —%</div>
-          <div class="small" id="threeCloudHint">更佳参考：中云 ≤50%（越低越好）；高云 ≤80%（薄幕可接受）。</div>
+          <div class="mono big2" id="threeClouds">—</div>
+          <div class="small" id="threeCloudHint">评分基于本地纬度的“更适合拍摄的云量范围”。</div>
         </div>
       </div>
 
       <div class="card explain">
-        <div class="k">3小时状态分级（4态）</div>
+        <div class="k">3小时状态分级</div>
         <ul class="bullets">
           <li><b>爆发进行中</b>：触发更明确，短时内值得马上看。</li>
           <li><b>爆发概率上升</b>：系统更容易发生，但未到持续触发。</li>
@@ -141,8 +143,8 @@
     <!-- 72小时 -->
     <section id="t72" class="pane">
       <div class="card">
-        <div class="k">72小时范围预测（按天）</div>
-        <div class="small">按天给“可能性区间”，不细到具体时刻；更细的时间点交给 1小时 / 3小时模块。</div>
+        <div class="k">72小时范围预测</div>
+        <div class="small">按天预测“可能性区间”，无法细致到具体时刻。</div>
 
         <div class="tableWrap">
           <table class="tbl">
@@ -150,8 +152,8 @@
               <tr>
                 <th class="colDate">日期（本地）</th>
                 <th class="colConclusion">结论</th>
-                <th class="colScore">C值</th>
-                <th class="colBasis">依据（人话）</th>
+                <th class="colScore">分数</th>
+                <th class="colBasis">依据</th>
               </tr>
             </thead>
             <tbody id="daysBody">
@@ -162,13 +164,13 @@
       </div>
 
       <div class="card explain">
-        <div class="k">72小时结论分级（按天）</div>
+        <div class="k">72小时结论分级（C值）</div>
         <ul class="bullets">
-          <li><b>可能性高</b>：能量背景+送达能力更强，值得提前规划。</li>
-          <li><b>有窗口</b>：存在机会，重点看云与当晚即时模块。</li>
-          <li><b>小概率</b>：机会少，除非位置/条件极佳。</li>
-          <li><b>低可能</b>：综合偏弱，提前投入意义不大。</li>
-          <li><b>不可观测</b>：不建议投入。</li>
+          <li><b>5分 强烈推荐</b>：能量背景+送达能力更强，值得提前规划。</li>
+          <li><b>4分 值得出门</b>：存在机会，重点看云与当晚即时模块。</li>
+          <li><b>3分 可蹲守</b>：机会少，除非位置/条件极佳。</li>
+          <li><b>2分 低概率</b>：综合偏弱，提前投入意义不大。</li>
+          <li><b>1分 不可观测</b>：不建议投入。</li>
         </ul>
       </div>
     </section>
@@ -176,6 +178,25 @@
     <footer class="foot">
       数据源：NOAA SWPC（实时太阳风、OVATION nowcast、Kp 预报）与 Open-Meteo 云量预报。
     </footer>
+  </div>
+
+  <!-- 背景介绍 Modal -->
+  <div id="aboutModal" class="modal hidden" aria-hidden="true">
+    <div class="modalMask" data-close="1"></div>
+    <div class="modalCard" role="dialog" aria-modal="true" aria-labelledby="aboutTitle">
+      <div class="modalHead">
+        <div id="aboutTitle" class="modalTitle">极光预测，为什么不能只是 KP？</div>
+        <button id="btnAboutClose" class="btn icon" type="button" aria-label="关闭">✕</button>
+      </div>
+      <div class="modalBody">
+        <p>KP 是为全球空间天气监测而设计的宏观指标。它在航天器运行、电力系统防护、长期磁扰评估中非常有效，但它的设计目标，从来不是服务于具体地点、具体时段的地面观测者。</p>
+        <p>对于普通极光观测与拍摄来说，KP 的粒度过于粗糙。它不区分 IMF 的瞬时方向变化，也难以反映短时稳定性与局地响应。这也是为什么在真实观测中，常常会出现——KP 看似“合适”，却依然无法判断是否值得立即行动的情况。</p>
+        <p>于是，在漠河零下40度的寒夜中，Aurora Capture 诞生了。</p>
+        <p>C 值并不是用来替代 KP 的，它更像是一个面向观测与拍摄的「可拍可观指数」。</p>
+        <p>作为一名理工科出身的风光摄影爱好者，我尝试从更接近观测者的角度出发，直接使用太阳风与磁场的原始参数，在更短的时间尺度上，评估它们是否正在形成一个对拍摄友好的窗口。</p>
+        <p>希望让所有摄影师与追光者都能更清楚地知道：此刻，地球手里握着的，究竟是一副什么样的牌。</p>
+      </div>
+    </div>
   </div>
 
   <script src="./app.js?v=25"></script>
