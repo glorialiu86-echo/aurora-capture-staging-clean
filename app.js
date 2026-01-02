@@ -205,7 +205,261 @@
       missing
     };
   }
+  // ===============================
+  // NASA (HAPI) first, NOAA backup
+  // Rules:
+  // - C model: force GSM Bz only (no GSM => treat as missing bz)
+  // - NASA age <=10min: use NASA
+  // - NASA age 10-30min: use NASA + time decay (mild downweight)
+  // - NASA age >30min: switch to NOAA + mark switched
+  // ===============================
 
+  const NASA_HAPI_BASE = "https://cdaweb.gsfc.nasa.gov/hapi";
+  const NASA_MAG_ID = "DSCOVR_H0_MAG"; // Bt / Bz
+  const NASA_PLA_ID = "DSCOVR_H1_FC";  // speed / density
+
+  // 只要你不想手动找参数名，就用“自动探测”：
+  // 我会先 call /info，再从 parameters 里按候选名匹配到正确字段（大小写/下划线都兼容）。
+  function pickParamName(info, candidates){
+    const params = info?.parameters || [];
+    const names = params.map(p => p?.name).filter(Boolean);
+
+    const lowerMap = new Map();
+    names.forEach(n => lowerMap.set(String(n).toLowerCase(), n));
+
+    for(const c of candidates){
+      const hit = lowerMap.get(String(c).toLowerCase());
+      if(hit) return hit;
+    }
+    return null;
+  }
+
+  function toISO(d){
+    // NASA HAPI 要 ISO8601（UTC）字符串
+    return new Date(d).toISOString();
+  }
+
+  function parseHapiTime(t){
+    // HAPI time 可能是 ISO 字符串
+    const ms = Date.parse(t);
+    return Number.isFinite(ms) ? ms : null;
+  }
+
+  async function fetchNASA_HAPI_Last2h(){
+    // 1) 先拿 info，确认字段名
+    const infoMagUrl = `${NASA_HAPI_BASE}/info?id=${encodeURIComponent(NASA_MAG_ID)}`;
+    const infoPlaUrl = `${NASA_HAPI_BASE}/info?id=${encodeURIComponent(NASA_PLA_ID)}`;
+
+    let magInfo, plaInfo;
+
+    try{
+      const [r1, r2] = await Promise.all([
+        fetch(infoMagUrl, { cache:"no-store" }),
+        fetch(infoPlaUrl, { cache:"no-store" })
+      ]);
+      magInfo = await r1.json();
+      plaInfo = await r2.json();
+
+      cacheSet("cache_nasa_mag_info", magInfo);
+      cacheSet("cache_nasa_pla_info", plaInfo);
+    }catch(e){
+      const c1 = cacheGet("cache_nasa_mag_info");
+      const c2 = cacheGet("cache_nasa_pla_info");
+      if(c1?.value && c2?.value){
+        magInfo = c1.value;
+        plaInfo = c2.value;
+      }else{
+        return { ok:false, note:"❌ NASA(HAPI) info 拉取失败且无缓存", data:null, missing:["v","n","bt","bz"], meta:{ source:"NASA" } };
+      }
+    }
+
+    // 2) 自动匹配字段名（你核心要求：GSM Bz）
+    const magBtName = pickParamName(magInfo, ["BT", "bt", "B_T", "Btotal", "B_TOTAL"]);
+    const magBzGsmName = pickParamName(magInfo, ["BZ_GSM", "bz_gsm", "Bz_gsm", "BZgsm"]);
+    const magBzGseName = pickParamName(magInfo, ["BZ_GSE", "bz_gse", "Bz_gse", "BZgse"]);
+
+    const plaVName = pickParamName(plaInfo, ["SPEED", "speed", "V", "Vsw", "V_SW"]);
+    const plaNName = pickParamName(plaInfo, ["DENSITY", "density", "N", "Nsw", "N_SW"]);
+
+    // 如果连速度/密度/Bt 都匹配不到，NASA 直接判失败
+    if(!magBtName || !plaVName || !plaNName){
+      return { ok:false, note:"❌ NASA(HAPI) 参数匹配失败（字段名不兼容）", data:null, missing:["v","n","bt","bz"], meta:{ source:"NASA" } };
+    }
+
+    // 3) 拉 2 小时数据，取最后一条有效值
+    const tMax = new Date();
+    const tMin = new Date(tMax.getTime() - 2*3600*1000);
+
+    // MAG：取 bt + bz_gsm（强制）+ bz_gse（仅用于判断“只有GSE”）
+    const magParams = [magBtName];
+    if(magBzGsmName) magParams.push(magBzGsmName);
+    if(magBzGseName) magParams.push(magBzGseName);
+
+    const magDataUrl =
+      `${NASA_HAPI_BASE}/data?id=${encodeURIComponent(NASA_MAG_ID)}` +
+      `&time.min=${encodeURIComponent(toISO(tMin))}` +
+      `&time.max=${encodeURIComponent(toISO(tMax))}` +
+      `&parameters=${encodeURIComponent(magParams.join(","))}` +
+      `&format=json`;
+
+    const plaParams = [plaVName, plaNName];
+    const plaDataUrl =
+      `${NASA_HAPI_BASE}/data?id=${encodeURIComponent(NASA_PLA_ID)}` +
+      `&time.min=${encodeURIComponent(toISO(tMin))}` +
+      `&time.max=${encodeURIComponent(toISO(tMax))}` +
+      `&parameters=${encodeURIComponent(plaParams.join(","))}` +
+      `&format=json`;
+
+    let magJ, plaJ;
+    try{
+      const [r1, r2] = await Promise.all([
+        fetch(magDataUrl, { cache:"no-store" }),
+        fetch(plaDataUrl, { cache:"no-store" })
+      ]);
+      magJ = await r1.json();
+      plaJ = await r2.json();
+
+      cacheSet("cache_nasa_mag_data", magJ);
+      cacheSet("cache_nasa_pla_data", plaJ);
+    }catch(e){
+      const c1 = cacheGet("cache_nasa_mag_data");
+      const c2 = cacheGet("cache_nasa_pla_data");
+      if(c1?.value && c2?.value){
+        magJ = c1.value;
+        plaJ = c2.value;
+      }else{
+        return { ok:false, note:"❌ NASA(HAPI) data 拉取失败且无缓存", data:null, missing:["v","n","bt","bz"], meta:{ source:"NASA" } };
+      }
+    }
+
+    const magData = magJ?.data;
+    const plaData = plaJ?.data;
+
+    if(!Array.isArray(magData) || !Array.isArray(plaData) || magData.length < 2 || plaData.length < 2){
+      return { ok:false, note:"❌ NASA(HAPI) data 结构异常", data:null, missing:["v","n","bt","bz"], meta:{ source:"NASA" } };
+    }
+
+    // HAPI data: [headerRow?, ...] 这里的 JSON 格式常见是:
+    // { data: [ [time, v1, v2...], [time, ...] ] }
+    function lastFiniteByIndex(rows, idx){
+      for(let i = rows.length - 1; i >= 0; i--){
+        const v = Number(rows[i]?.[idx]);
+        if(Number.isFinite(v)) return v;
+      }
+      return null;
+    }
+    function lastTime(rows){
+      for(let i = rows.length - 1; i >= 0; i--){
+        const t = rows[i]?.[0];
+        if(t) return t;
+      }
+      return null;
+    }
+
+    // MAG index mapping:
+    // [0]=time, [1]=bt, [2]=bz_gsm?, [3]=bz_gse?（取决于有没有匹配到）
+    const bt = lastFiniteByIndex(magData, 1);
+
+    let bz_gsm = null;
+    let bz_gse = null;
+
+    if(magBzGsmName && magParams[1] === magBzGsmName) bz_gsm = lastFiniteByIndex(magData, 2);
+    // bz_gse 的位置要看数组里有没有 bz_gsm
+    if(magBzGseName){
+      const idx = (magBzGsmName ? 3 : 2);
+      bz_gse = lastFiniteByIndex(magData, idx);
+    }
+
+    // PLA index mapping:
+    // [0]=time, [1]=speed, [2]=density
+    const v = lastFiniteByIndex(plaData, 1);
+    const n = lastFiniteByIndex(plaData, 2);
+
+    // 取最新时间（以 MAG/PLA 最新的那个为准）
+    const tMag = lastTime(magData);
+    const tPla = lastTime(plaData);
+    const msMag = parseHapiTime(tMag);
+    const msPla = parseHapiTime(tPla);
+    const bestMs = Math.max(msMag ?? 0, msPla ?? 0);
+
+    const time_tag = (msMag && msMag >= (msPla ?? 0)) ? tMag : tPla;
+
+    // missing 判定：只要 GSM bz 缺失，就认为 bz 缺失（即使有 GSE 也算缺）
+    const missing = [];
+    if(v == null) missing.push("v");
+    if(n == null) missing.push("n");
+    if(bt == null) missing.push("bt");
+
+    const hasOnlyGSE = (bz_gsm == null) && (bz_gse != null);
+    if(bz_gsm == null) missing.push("bz");
+
+    const ageMin = bestMs ? (Date.now() - bestMs) / 60000 : 9999;
+
+    return {
+      ok: true,
+      note: "✅ NASA 已更新",
+      data: { v, n, bt, bz: bz_gsm, time_tag },
+      missing,
+      meta: {
+        source: "NASA",
+        ageMin,
+        hasOnlyGSE
+      }
+    };
+  }
+
+  async function fetchSW_MultiSource(){
+    // 先拉 NASA
+    const nasa = await fetchNASA_HAPI_Last2h();
+
+    // NASA 完全不可用 → 直接走 NOAA
+    if(!nasa.ok || !nasa.data){
+      const noaa = await fetchSWPC2h();
+      if(noaa.ok && noaa.data){
+        return {
+          ok: true,
+          note: `⚠️ NASA 不可用，已切换 NOAA`,
+          data: noaa.data,
+          missing: noaa.missing || [],
+          meta: { source:"NOAA", switched:true, nasaAgeMin:null, decay:1.0 }
+        };
+      }
+      return { ok:false, note:"❌ NASA/NOAA 均不可用", data:null, missing:["v","n","bt","bz"], meta:{ source:"NONE" } };
+    }
+
+    const age = Number(nasa.meta?.ageMin ?? 9999);
+
+    // 规则：<=10 正常；10-30 轻微衰减；>30 切 NOAA
+    if(age <= 10){
+      return { ...nasa, note:`✅ NASA 已更新（${Math.round(age)}m）`, meta:{...nasa.meta, switched:false, decay:1.0} };
+    }
+    if(age > 10 && age <= 30){
+      // 时间衰减：10→30 分钟，decay 从 0.96 线性到 0.85（轻微）
+      const t = clamp((age - 10) / 20, 0, 1);
+      const decay = 0.96 + (0.85 - 0.96) * t;
+      return { ...nasa, note:`⚠️ NASA 数据偏旧（${Math.round(age)}m），进入时间衰减模式`, meta:{...nasa.meta, switched:false, decay} };
+    }
+
+    // >30: 切 NOAA
+    const noaa = await fetchSWPC2h();
+    if(noaa.ok && noaa.data){
+      return {
+        ok: true,
+        note: `⚠️ NASA 超过 30 分钟未更新（${Math.round(age)}m），数据源已切换 NOAA`,
+        data: noaa.data,
+        missing: noaa.missing || [],
+        meta: { source:"NOAA", switched:true, nasaAgeMin:age, decay:1.0 }
+      };
+    }
+
+    // NOAA 也挂：退回 NASA（但明确很旧）
+    return {
+      ...nasa,
+      note: `⚠️ NASA 很旧（${Math.round(age)}m），且 NOAA 不可用：继续使用 NASA（高风险）`,
+      meta:{...nasa.meta, switched:false, decay:0.80}
+    };
+  }
+  
   async function fetchKp(){
     const url = "https://services.swpc.noaa.gov/products/noaa-planetary-k-index-forecast.json";
     try{
@@ -683,21 +937,38 @@
         setStatusText("已生成。");
         return;
       }
-
-      const [noaa, kp, clouds, ova] = await Promise.all([
-        fetchSWPC2h(),
+      const [swPack, kp, clouds, ova] = await Promise.all([
+        fetchSW_MultiSource(),
         fetchKp(),
         fetchClouds(lat, lon),
         fetchOvation()
       ]);
 
+      // 状态点：太阳风来源改成 NASA/NOAA
       setStatusDots([
-        { level: noaa.ok ? "ok" : "bad", text: noaa.note || "NOAA" },
+        { level: swPack.ok ? "ok" : "bad", text: swPack.note || "太阳风" },
         { level: kp.ok ? "ok" : "bad", text: kp.note || "Kp" },
         { level: clouds.ok ? "ok" : "bad", text: clouds.note || "云量" },
         { level: ova.ok ? "ok" : "bad", text: ova.note || "OVATION" },
       ]);
 
+      const sw = swPack.data;
+
+      // NASA/NOAA 都不可用：停止生成（不给装出来的自信）
+      if(!sw){
+        safeText($("oneHeroLabel"), "—");
+        safeText($("oneHeroMeta"), "—");
+        safeText($("swLine"), "V — ｜ Bt — ｜ Bz — ｜ N —");
+        safeText($("swMeta"), "太阳风数据不可用");
+
+        const labels = ["+10m","+20m","+30m","+40m","+50m","+60m"];
+        const vals = [0,0,0,0,0,0];
+        const cols = vals.map(()=> "rgba(255,255,255,.14)");
+        renderChart(labels, vals, cols);
+
+        setStatusText("🚫 NASA/NOAA 当前不可用（且无缓存），无法生成可靠预测。请稍后重试。");
+        return;
+      }
       // NOAA 完全不可用：直接停止生成
       const sw = noaa.data;
       if(!sw){
@@ -722,10 +993,12 @@
       const nTxt  = sw.n  == null ? "—" : round0(sw.n);
 
       safeText($("swLine"), `V ${vTxt} ｜ Bt ${btTxt} ｜ Bz ${bzTxt} ｜ N ${nTxt}`);
-      safeText($("swMeta"), sw.time_tag ? `NOAA 时间：${sw.time_tag}` : "NOAA 时间：—");
-
+      const src = swPack.meta?.source || "—";
+      const switched = swPack.meta?.switched ? "（数据源已切换）" : "";
+      safeText($("swMeta"), sw.time_tag ? `${src} 时间：${sw.time_tag}${switched}` : `${src} 时间：—${switched}`);
+      
       // NOAA 缺字段：强提示弹窗 + 页面状态文案（甩锅 NOAA + 保守估算）
-      const missingKeys = Array.isArray(noaa.missing) ? noaa.missing : [];
+      const missingKeys = Array.isArray(swPack.missing) ? swPack.missing : [];
       const hasMissing = missingKeys.length > 0;
 
       if(hasMissing){
