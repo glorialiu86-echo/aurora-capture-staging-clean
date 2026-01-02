@@ -1,13 +1,3 @@
-/* Aurora Capture 极光捕网 v2.5.4
- * - C值图表改为 0–5（整数）
- * - 结论统一：5档（5强烈推荐 / 4值得出门 / 3可蹲守 / 2低概率 / 1不可观测）
- * - NOAA 数据缺失：强提示 + 保守估算（不直接降到不可观测）
- * - 云量显示：低云/中云/高云 + 评分（优/良/中/差）
- * - 72h 表格结论与底部注释同一命名体系
- * - 新增：背景介绍 Modal
- * - 再次修改按钮无法点击问题
- */
-
 
 // ===============================
 // Data Adapter (frozen protocol v1)
@@ -16,7 +6,7 @@ const BASE_PATH = window.location.pathname.includes("/aurora-capture/")
   ? "/aurora-capture"
   : "";
 
-console.log("BASE_PATH", BASE_PATH, "pathname", window.location.pathname);
+// console.log("BASE_PATH", BASE_PATH, "pathname", window.location.pathname);
 
 const DATA_ENDPOINTS = {
   plasma: `${BASE_PATH}/noaa/plasma.json`,
