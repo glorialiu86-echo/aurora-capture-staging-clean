@@ -324,9 +324,6 @@ const {
       alert(`磁纬约 ${Math.round(m * 10) / 10}°`);
     });
   }
-
   document.addEventListener("DOMContentLoaded", bootstrap);
-})();
-
 
 getRealtimeState().then(s => console.log("RealtimeState", s)).catch(e => console.error(e));
