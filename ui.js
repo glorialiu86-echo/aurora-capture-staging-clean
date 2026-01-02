@@ -551,26 +551,6 @@ window.UI = {
   showAlertModal
 };
 
-// ---------- expose model helpers used by app.js ----------
-window.approxMagLat = approxMagLat;
-window.baseScoreFromSW = baseScoreFromSW;
-window.obsGate = obsGate;
-window.getMoonAltDeg = getMoonAltDeg;
-window.moonFactorByLat = moonFactorByLat;
-window.score5FromC10 = score5FromC10;
-window.labelByScore5 = labelByScore5;
-window.state3h = state3h;
-window.deliverModel = deliverModel;
-window.bestCloud3h = bestCloud3h;
-window.cloudGradeFromBest = cloudGradeFromBest;
-window.next3DaysLocal = next3DaysLocal;
-window.kpMaxByDay = kpMaxByDay;
-window.scoreCloudDay = scoreCloudDay;
-window.estimateNightRatio = estimateNightRatio;
-window.soften = soften;
-window.bestCloudHourForDay = bestCloudHourForDay;
-window.pickOvation = pickOvation;
-
 // ---------- expose data fetchers for app.js (window.Data.*) ----------
 window.Data = window.Data || {};
 Object.assign(window.Data, { fetchKp, fetchClouds, fetchOvation });
