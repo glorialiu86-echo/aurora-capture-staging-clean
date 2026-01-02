@@ -1,4 +1,4 @@
-/* Aurora Capture 极光捕网 v2.5.3
+/* Aurora Capture 极光捕网 v2.5.4
  * - C值图表改为 0–5（整数）
  * - 结论统一：5档（5强烈推荐 / 4值得出门 / 3可蹲守 / 2低概率 / 1不可观测）
  * - NOAA 数据缺失：强提示 + 保守估算（不直接降到不可观测）
@@ -12,9 +12,13 @@
 // ===============================
 // Data Adapter (frozen protocol v1)
 // ===============================
+const BASE_PATH = window.location.pathname.includes("/aurora-capture/")
+  ? "/aurora-capture"
+  : "";
+
 const DATA_ENDPOINTS = {
-  plasma: "/noaa/plasma.json",
-  mag: "/noaa/mag.json",
+  plasma: `${BASE_PATH}/noaa/plasma.json`,
+  mag: `${BASE_PATH}/noaa/mag.json`,
 };
 
 function nowIsoUtc() {
