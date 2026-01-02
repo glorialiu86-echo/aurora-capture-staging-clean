@@ -103,6 +103,21 @@ const {
       if (sw.n == null)  missingKeys.push("n");
       if (sw.bt == null) missingKeys.push("bt");
       if (sw.bz == null) missingKeys.push("bz");
+
+      // ✅ always render realtime solar-wind line (otherwise UI stays "—")
+      const fmtNum = (x, d=1) => (Number.isFinite(x) ? x.toFixed(d) : "—");
+      
+      safeText(
+        $("swLine"),
+        `V ${fmtNum(sw.v, 0)} ｜ Bt ${fmtNum(sw.bt, 1)} ｜ Bz ${fmtNum(sw.bz, 1)} ｜ N ${fmtNum(sw.n, 2)}`
+      );
+      
+      // meta: show timestamps + freshness
+      const tsText = sw.time_tag ? fmtYMDHM(new Date(sw.time_tag)) : "—";
+      safeText(
+        $("swMeta"),
+        `更新时间：${tsText} ・ 新鲜度：mag ${Math.round(rt.imf.ageMin)}m / plasma ${Math.round(rt.solarWind.ageMin)}m`
+      );
       
       // 不可用：>3小时 或者关键全空
       if (rt.status === "INVALID") {
