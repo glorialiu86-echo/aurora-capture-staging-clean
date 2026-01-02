@@ -1,14 +1,33 @@
-const {
-  $, clamp, round0, abs,
-  safeText, safeHTML,
-  setStatusDots, setStatusText,
-  cacheSet, cacheGet, fmtAge,
-  now, fmtYMD, fmtHM, fmtYMDHM,
-  escapeHTML,
-  renderChart, badgeHTML,
-  initTabs, initAbout,
-  showAlertModal
-} = window.UI || {};
+// --- UI proxies (avoid load-order / caching issues) ---
+const UI = () => window.UI || {};
+
+const $ = (id) => UI().$(id);
+const clamp = (x, a, b) => UI().clamp(x, a, b);
+const round0 = (x) => UI().round0(x);
+const abs = (x) => UI().abs(x);
+
+const safeText = (el, t) => UI().safeText(el, t);
+const safeHTML = (el, h) => UI().safeHTML(el, h);
+
+const setStatusDots = (items) => UI().setStatusDots(items);
+const setStatusText = (t) => UI().setStatusText(t);
+
+const cacheSet = (k, v) => UI().cacheSet(k, v);
+const cacheGet = (k) => UI().cacheGet(k);
+const fmtAge = (ms) => UI().fmtAge(ms);
+
+const now = () => UI().now();
+const fmtYMD = (d) => UI().fmtYMD(d);
+const fmtHM = (d) => UI().fmtHM(d);
+const fmtYMDHM = (d) => UI().fmtYMDHM(d);
+
+const escapeHTML = (s) => UI().escapeHTML(s);
+const renderChart = (labels, vals, cols) => UI().renderChart(labels, vals, cols);
+const badgeHTML = (text, cls) => UI().badgeHTML(text, cls);
+
+const initTabs = () => UI().initTabs?.();
+const initAbout = () => UI().initAbout?.();
+const showAlertModal = (html) => UI().showAlertModal(html);
 
    // ---------- main run ----------
   async function run(){
