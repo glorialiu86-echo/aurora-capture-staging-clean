@@ -1,0 +1,15 @@
+{
+  "type": "AACGMv2_mlat_grid",
+  "alt_km": 110,
+  "utc": "2026-01-01T00:00:00+00:00",
+  "lat_start": -90,
+  "lat_step": 1,
+  "lat_count": 181,
+  "lon_start": -180,
+  "lon_step": 1,
+  "lon_count": 360,
+  "scale": 100,
+  "dtype": "int16_le",
+  "indexing": "idx = (lat+90)*360 + ((lon+180)%360), lon uses floor to 1deg bin",
+  "sentinel_invalid": -32768
+}
