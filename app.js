@@ -73,10 +73,10 @@ const {
         return;
       }
       const [rt, kp, clouds, ova] = await Promise.all([
-        getRealtimeState(),      // ✅ 只走 NOAA 镜像（mag/plasma.json）
-        fetchKp(),
-        fetchClouds(lat, lon),
-        fetchOvation()
+        getRealtimeState(),
+        window.Data.fetchKp(),
+        window.Data.fetchClouds(lat, lon),
+        window.Data.fetchOvation()
       ]);
       
       // 状态点：太阳风来源固定为镜像 + 新鲜度状态
