@@ -593,10 +593,10 @@ canvas{width:100% !important; height:100% !important}
   }
 }
 
-/* 1小时下方：与上方内容同宽的模块堆叠（不要贴满整页） */
+/* 1小时下方：跟随 .wrap 的内容宽度（不要单独设页宽） */
 .fullWidthStack {
-  width: min(1100px, 92vw);
-  margin: 0 auto;
+  width: 100%;
+  margin: 0;
   display: grid;
   grid-template-columns: 1fr;
   gap: 14px;
@@ -605,4 +605,11 @@ canvas{width:100% !important; height:100% !important}
 /* 确保卡片吃满容器宽度 */
 .fullWidthStack > .card {
   width: 100%;
+}
+
+/* 兜底：如果 fullWidthStack 意外跑到 .wrap 外面，也强制按 .wrap 的宽度居中 */
+body > .fullWidthStack,
+section > .fullWidthStack {
+  width: min(1100px, 92vw);
+  margin: 0 auto;
 }
