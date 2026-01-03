@@ -83,38 +83,71 @@ function _cloudTotal(low, mid, high){
   return (a + b + c) / 3;
 }
 
-// 取 “未来3小时内” 云量最好的那个小时点（止血版：简单、稳）
-function bestCloud3h(openMeteoJson, baseDate){
-  const pack = _omGetHourlyCloudArrays(openMeteoJson);
-  if(!pack) return null;
+    // 取 “未来3小时内” 云量最好的那个小时点（止血版：简单、稳）
+    function bestCloud3h(openMeteoJson, baseDate){
+      const pack = _omGetHourlyCloudArrays(openMeteoJson);
+      if(!pack) return null;
 
-  const t0 = baseDate instanceof Date ? baseDate.getTime() : Date.now();
-  const t1 = t0 + 3 * 3600 * 1000;
+      const t0 = baseDate instanceof Date ? baseDate.getTime() : Date.now();
+      const t1 = t0 + 3 * 3600 * 1000;
 
-  let best = null;
-  let bestTotal = Infinity;
+      let best = null;
+      let bestTotal = Infinity;
 
-  for(let i=0;i<pack.times.length;i++){
-    const ti = Date.parse(pack.times[i]);
-    if(!Number.isFinite(ti)) continue;
-    if(ti < t0 || ti > t1) continue;
+      for(let i=0;i<pack.times.length;i++){
+        const ti = Date.parse(pack.times[i]);
+        if(!Number.isFinite(ti)) continue;
+        if(ti < t0 || ti > t1) continue;
 
-    const low = pack.low[i], mid = pack.mid[i], high = pack.high[i];
-    const total = _cloudTotal(low, mid, high);
-    if(total < bestTotal){
-      bestTotal = total;
-      best = {
-        ts: pack.times[i],
-        low: Math.round(Number(low)),
-        mid: Math.round(Number(mid)),
-        high: Math.round(Number(high)),
-        total: bestTotal
+        const low = pack.low[i], mid = pack.mid[i], high = pack.high[i];
+        const total = _cloudTotal(low, mid, high);
+        if(total < bestTotal){
+          bestTotal = total;
+          best = {
+            ts: pack.times[i],
+            low: Math.round(Number(low)),
+            mid: Math.round(Number(mid)),
+            high: Math.round(Number(high)),
+            total: bestTotal
+          };
+        }
+      }
+
+      return best;
+    }
+
+    // 取最接近当前时间的“小时云量三层”(low/mid/high)
+    function cloudNow3layer(openMeteoJson, baseDate){
+      const pack = _omGetHourlyCloudArrays(openMeteoJson);
+      if(!pack) return null;
+
+      const t0 = baseDate instanceof Date ? baseDate.getTime() : Date.now();
+
+      let bestI = -1;
+      let bestD = Infinity;
+
+      for(let i=0;i<pack.times.length;i++){
+        const ti = Date.parse(pack.times[i]);
+        if(!Number.isFinite(ti)) continue;
+        const d = Math.abs(ti - t0);
+        if(d < bestD){ bestD = d; bestI = i; }
+      }
+
+      if(bestI < 0) return null;
+
+      const low  = Number(pack.low[bestI]);
+      const mid  = Number(pack.mid[bestI]);
+      const high = Number(pack.high[bestI]);
+
+      if(!Number.isFinite(low) || !Number.isFinite(mid) || !Number.isFinite(high)) return null;
+
+      return {
+        ts: pack.times[bestI],
+        low: Math.round(low),
+        mid: Math.round(mid),
+        high: Math.round(high)
       };
     }
-  }
-
-  return best;
-}
 
       // 云量评分（止血版）：按总云量分档
       function cloudGradeFromBest(best){
@@ -312,13 +345,33 @@ function bestCloud3h(openMeteoJson, baseDate){
       if (sw.bt == null) missingKeys.push("bt");
       if (sw.bz == null) missingKeys.push("bz");
 
-      // ✅ always render realtime solar-wind line (otherwise UI stays "—")
-      const fmtNum = (x, d=1) => (Number.isFinite(x) ? x.toFixed(d) : "—");
-      
-      safeText(
-        $("swLine"),
-        `V ${fmtNum(sw.v, 0)} ｜ Bt ${fmtNum(sw.bt, 1)} ｜ Bz ${fmtNum(sw.bz, 1)} ｜ N ${fmtNum(sw.n, 2)}`
-      );
+    // ✅ always render realtime solar-wind line (otherwise UI stays "—")
+    const fmtNum = (x, d=1) => (Number.isFinite(x) ? x.toFixed(d) : "—");
+
+    // 实时云量（当前小时 L/M/H）
+    let cloudBits = "";
+    try{
+      if(clouds?.ok && clouds?.data){
+        const cnow = cloudNow3layer(clouds.data, baseDate);
+        if(cnow){
+          cloudBits = ` ｜ 云 L/M/H ${cnow.low}/${cnow.mid}/${cnow.high}%`;
+        }
+      }
+    }catch(_){ cloudBits = ""; }
+
+    // 实时月角（当前时刻月亮高度角）
+    let moonBits = "";
+    try{
+      const moonAlt = getMoonAltDeg(baseDate, lat, lon);
+      if(Number.isFinite(moonAlt)){
+        moonBits = ` ｜ 月角 ${moonAlt.toFixed(1)}°`;
+      }
+    }catch(_){ moonBits = ""; }
+
+    safeText(
+      $("swLine"),
+      `V ${fmtNum(sw.v, 0)} ｜ Bt ${fmtNum(sw.bt, 1)} ｜ Bz ${fmtNum(sw.bz, 1)} ｜ N ${fmtNum(sw.n, 2)}${cloudBits}${moonBits}`
+    );
       
       // meta: show timestamps + freshness
       const tsText = sw.time_tag ? fmtYMDHM(new Date(sw.time_tag)) : "—";
