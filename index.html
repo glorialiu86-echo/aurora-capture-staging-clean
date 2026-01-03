@@ -19,7 +19,7 @@
           <div class="titleBlock">
             <div class="titleRow">
               <h1>Aurora Capture <span class="cn">极光捕网</span></h1>
-              <span class="ver">v2.6.29</span>
+              <span class="ver"><v2 class="6 30"></v2></span>
             </div>
             <div class="subtitle">输入经纬度 → 生成关于极光可见性/可拍性的即时预测（1小时/3小时/72小时）</div>
           </div>
@@ -67,18 +67,30 @@
 
     <!-- 1小时 -->
     <section id="t1" class="pane active">
-      <div class="gridCards">
+      <div class="gridCards oneHourStack">
+
+        <!-- 上：结论条（全宽） -->
         <div class="card hero">
-          <div class="k">当前建议（1小时内，10分钟粒度）</div>
-          <div class="big" id="oneHeroLabel">—</div>
-          <div class="small" id="oneHeroMeta">—</div>
+          <div class="heroTopRow">
+
+            <!-- 左：原本的大结论内容（“1分 不可观测”、时间、OVATION等） -->
+            <div class="heroMain">
+              <!-- 把你原来左卡里：大标题 + 小字时间那一坨，原封不动粘进来 -->
+            </div>
+
+            <!-- 右：不可观测原因（原来的 blockerExplain） -->
+            <div class="heroSide">
+              <!-- 把你原来左卡里的“不可观测原因”那块，原封不动粘进来 -->
+            </div>
+
+          </div>
         </div>
 
-        <div class="card hero">
-          <div class="k">上游实况（近实时）</div>
-          <div class="mono big2" id="swLine">V — ｜ Bt — ｜ Bz — ｜ N —</div>
-          <div class="small" id="swMeta">—</div>
+        <!-- 下：上游实况条（全宽） -->
+        <div class="card hero swHeroWide">
+          <!-- 把你原来右卡的内容（上游实况 V Bt Bz N + 云月 + 更新时间）原封不动粘进来 -->
         </div>
+
       </div>
 
       <div class="card chartCard">
@@ -234,10 +246,10 @@
   </div>
   
   <!-- your modules -->
-  <script defer src="./adapter.js?v=29"></script>
-  <script defer src="./ui.js?v=29"></script>
-  <script defer src="./model.js?v=29"></script>
-  <script defer src="./app.js?v=29"></script>
+  <script defer src="./adapter.js?v=30"></script>
+  <script defer src="./ui.js?v=30"></script>
+  <script defer src="./model.js?v=30"></script>
+  <script defer src="./app.js?v=30"></script>
   
 </body>
 </html>

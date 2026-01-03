@@ -545,3 +545,50 @@ canvas{width:100% !important; height:100% !important}
   background: rgba(255,255,255,.12);
   border-color: rgba(255,255,255,.20);
 }
+/* ===============================
+   1小时精准：结论条 + 上游条（全宽堆叠）
+   =============================== */
+
+.oneHourStack{
+  grid-template-columns: 1fr !important;
+}
+
+.heroTopRow{
+  display: flex;
+  gap: 14px;
+  align-items: stretch;
+}
+
+/* 左侧主结论区域：吃掉剩余空间 */
+.heroTopRow .heroMain{
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* 右侧原因块：固定一个舒服的宽度区间 */
+.heroTopRow .heroSide{
+  flex: 0 0 360px;
+  max-width: 420px;
+}
+
+/* 让“不可观测原因”更像并列模块，而不是贴边小块 */
+.heroTopRow .heroSide .blockerExplain{
+  margin-top: 0; /* 取消它原来自带的上边距，避免下沉 */
+  height: 100%;
+}
+
+/* 下方的上游条，保持全宽视觉 */
+.swHeroWide{
+  padding-top: 16px;
+}
+
+/* 移动端：自动改为上下堆叠（原因块掉到下面） */
+@media (max-width: 820px){
+  .heroTopRow{
+    flex-direction: column;
+  }
+  .heroTopRow .heroSide{
+    flex: 1 1 auto;
+    max-width: none;
+  }
+}
