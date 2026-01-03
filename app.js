@@ -346,11 +346,18 @@ function _cloudTotal(low, mid, high){
         renderChart(labels, vals, cols);
 
         safeText($("threeState"), "静默");
-        safeText($("threeHint"), "—");
+        safeText($("threeBurst"), "—");
         safeText($("threeDeliver"), "—");
         safeText($("threeDeliverMeta"), "—");
-        // 云量模块已隐藏：停止向 threeClouds 写内容（保留云量逻辑供未来恢复）
-        // safeHTML($("threeClouds"), "云量评分：—");
+
+        // 3小时（三卡，与 72h 同模板）
+        [0,1,2].forEach(i => {
+          safeText($("threeSlot"+i+"Time"), "—");
+          safeText($("threeSlot"+i+"Conclusion"), "1分 不可观测");
+          safeText($("threeSlot"+i+"Reason"), "不可观测。");
+          const card = $("threeSlot"+i);
+          if(card) card.className = "dayCard c1";
+        });
 
         // 72h（三列日卡）
         [0,1,2].forEach(i => {
@@ -828,35 +835,47 @@ function _cloudTotal(low, mid, high){
 
       const fmtWin = (s) => `${fmtHM(s.start)}–${fmtHM(s.end)}`;
 
-      // 渲染三小时条（用 HTML，方便并列/换行；后面你再用 style.css 微调）
-      const slotHtml = slots.map(s => {
-        const score = Number.isFinite(s.score5) ? s.score5 : "—";
-        const win = fmtWin(s);
-        const isBest = s.score5 === maxScore;
-        const badge = `<span class="badge c${escapeHTML(String(score))}">${escapeHTML(score)}分</span>`;
+      // 3小时三卡：按 72h 同款 dayCard 模板渲染（结论/底色跟随 C 值）
+      const map5 = {
+        5: { t: "强烈推荐", cls: "c5" },
+        4: { t: "值得出门", cls: "c4" },
+        3: { t: "可蹲守", cls: "c3" },
+        2: { t: "低概率", cls: "c2" },
+        1: { t: "不可观测", cls: "c1" },
+      };
 
-        const factor = s.factorText
-          ? `<div class="mutedLine">主要影响因素：${escapeHTML(s.factorText)}</div>`
-          : ``;
+      slots.forEach((s, i) => {
+        safeText($("threeSlot"+i+"Time"), fmtWin(s));
+        const score = Number.isFinite(s.score5) ? clamp(Math.round(s.score5), 1, 5) : 1;
+        const lab = map5[score] || map5[1];
 
-        return `
-          <div class="slot ${cClass(s.score5)} cFrame ${isBest ? "best" : ""}">
-            <div><b>${escapeHTML(win)}</b> ${badge}</div>
-            ${factor}
-          </div>
-        `;
-      }).join("");
+        safeText($("threeSlot"+i+"Conclusion"), `${score}分 ${lab.t}`);
+
+        // 仅显示一个主要影响因素（当 score<=2 且有 factorText）
+        const reason = (score <= 2 && s.factorText)
+          ? `主要影响因素：${s.factorText}`
+          : (score === 1 ? "当前时段不建议投入。" : "—");
+        safeText($("threeSlot"+i+"Reason"), reason);
+
+        const card = $("threeSlot"+i);
+        if(card) card.className = `dayCard ${lab.cls}${s.score5 === maxScore ? " best" : ""}`;
+      });
+
+      // 旧版列表容器（兼容：若仍存在则清空，避免残留）
+      if($("threeHint")) safeHTML($("threeHint"), "");
 
       const bestWindows = best.map(fmtWin).join(" / ");
       const bestLine = (best.length >= 2)
-        ? `并列最佳：${escapeHTML(bestWindows)}`
-        : `最佳窗口：${escapeHTML(bestWindows)}`;
+        ? `并列最佳：${bestWindows}`
+        : `最佳窗口：${bestWindows}`;
+
       const burstText = (s3Burst && s3Burst.state)
         ? `爆发模型：${s3Burst.state}${s3Burst.hint ? ` · ${s3Burst.hint}` : ""}`
         : "—";
       safeText($("threeBurst"), burstText);
 
-      safeHTML($("threeHint"), `${slotHtml}<div class="mutedLine">${bestLine}</div>`);
+      // 如果你以后想在 hero 里加一行“并列最佳/最佳窗口”，这里预留：
+      // safeText($("threeBestLine"), bestLine);
 
       // 3小时云量摘要：云量模块已隐藏（停止向 threeClouds 写内容；保留计算逻辑做退路）
       // let cloudBest3h = null;

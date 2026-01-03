@@ -438,6 +438,39 @@ canvas{width:100% !important; height:100% !important}
 .colBasis{min-width: 360px}
 
 /* ===============================
+   3小时：三卡（复用 72h dayCard 模板）
+   =============================== */
+
+/* 3小时三卡容器：与上方 hero 保持舒适间距 */
+.threeTri{
+  margin-top: 12px;
+}
+
+/* 3小时的时间标签更像“小时窗口”，略小一点，避免抢结论 */
+#t3 .threeTri .dayLabel{
+  font-size: 12px;
+  font-weight: 750;
+  color: rgba(255,255,255,.78);
+}
+
+/* 3小时卡片的结论数字略大一点（比 72h 更强调当下决策） */
+#t3 .threeTri .dayConclusion{
+  font-size: 32px;
+}
+
+/* 3小时下方整行模块：占满宽度 */
+.fullWidth{
+  width: 100%;
+}
+
+/* best 卡：轻微抬起 + 内描边（不强行改颜色，保持 c1~c5 体系） */
+.dayCard.best{
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,.08) inset,
+    0 16px 38px rgba(0,0,0,.32);
+  transform: translateY(-1px);
+}
+/* ===============================
    72小时：三列日卡（今天/明天/后天）
    =============================== */
 
@@ -798,6 +831,9 @@ canvas{width:100% !important; height:100% !important}
   .brandRow{align-items:flex-start}
   .threeSlots{gap: 8px}
   .threeSlots .slot{padding: 10px 12px}
+
+  /* 3小时三卡：移动端结论略缩小，避免太挤 */
+  #t3 .threeTri .dayConclusion{ font-size: 28px; }
 
   /* 移动端 Header：logo + 标题更大，信息更像“工具品牌” */
   .head{ margin-bottom: 10px; }
