@@ -99,10 +99,10 @@
     const bg    = (v >= 420 && bt >= 6.0);
     const dense = (n >= 2.0);
 
-    if(trig && bg) return { state:"爆发进行中", hint:"触发更明确，短时内值得马上看。", score:8.0 };
+    if(trig && bg) return { state:"爆发进行中", hint:"离子触发更明确。", score:8.0 };
     if(bg && (dense || trig)) return { state:"爆发概率上升", hint:"系统更容易发生，但未到持续触发。", score:6.4 };
     if(bg) return { state:"爆发后衰落期", hint:"刚有过波动，仍可能余震一会儿。", score:5.4 };
-    return { state:"静默", hint:"背景不足或触发不清晰，先别投入。", score:3.0 };
+    return { state:"静默", hint:"背景不足或触发不清晰。", score:3.0 };
   }
 
   // 72h 代理规则（你 app.js 里那两个）

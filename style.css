@@ -441,16 +441,18 @@ canvas{width:100% !important; height:100% !important}
    3小时：三卡（复用 72h dayCard 模板）
    =============================== */
 
-/* 3小时三卡容器：与上方 hero 保持舒适间距 */
+/* 3小时三卡容器：与上方 hero 保持舒适间距，并加大卡片之间的 gap */
 .threeTri{
-  margin-top: 12px;
+  margin-top: 14px;
+  gap: 14px;
 }
 
-/* 3小时的时间标签更像“小时窗口”，略小一点，避免抢结论 */
+/* 3小时的时间标签：时间窗很重要，提升到“副标题级” */
 #t3 .threeTri .dayLabel{
-  font-size: 12px;
-  font-weight: 750;
-  color: rgba(255,255,255,.78);
+  font-size: 15px;
+  font-weight: 850;
+  color: rgba(255,255,255,.90);
+  letter-spacing: .2px;
 }
 
 /* 3小时卡片的结论数字略大一点（比 72h 更强调当下决策） */
@@ -462,6 +464,10 @@ canvas{width:100% !important; height:100% !important}
 .fullWidth{
   width: 100%;
 }
+
+/* 3小时：三卡与下方模型/说明之间留出呼吸感 */
+#t3 .fullWidth{ margin-top: 14px; }
+#t3 .explain{ margin-top: 14px; }
 
 /* best 卡：轻微抬起 + 内描边（不强行改颜色，保持 c1~c5 体系） */
 .dayCard.best{
@@ -554,6 +560,9 @@ canvas{width:100% !important; height:100% !important}
 @media (max-width: 820px){
   .daysTri{ grid-template-columns: 1fr; }
   .dayConclusion{ font-size: 28px; }
+
+  /* 3小时三卡：移动端时间窗也要清晰 */
+  #t3 .threeTri .dayLabel{ font-size: 14px; }
 }
 /* ===============================
    72小时：概览条（A）
@@ -671,6 +680,14 @@ canvas{width:100% !important; height:100% !important}
 /* 72小时页签：两个顶层卡片之间留出间距 */
 #t72 > .card + .card{
   margin-top: 14px;
+}
+
+/* 72小时顶部说明：标题与导语之间更松一点，避免“顶头” */
+#t72 .hero .k{
+  margin-bottom: 10px;
+}
+#t72 .hero .small{
+  margin-top: 4px;
 }
 
 /* 72h 分数列：更像主视觉数字 */
