@@ -12,6 +12,23 @@
    
    const safeText = (el, t) => { if (uiReady()) window.UI.safeText(el, t); };
    const safeHTML = (el, h) => { if (uiReady()) window.UI.safeHTML(el, h); };
+
+// --- Solar wind placeholder HTML (.swMain/.swAux layout) ---
+const SW_PLACEHOLDER_HTML = `
+  <div class="swMain">
+    <span><span class="swK">V</span> <span class="swV">—</span></span>
+    <span class="swSep">｜</span>
+    <span><span class="swK">Bt</span> <span class="swV">—</span></span>
+    <span class="swSep">｜</span>
+    <span><span class="swK">Bz</span> <span class="swV">—</span></span>
+    <span class="swSep">｜</span>
+    <span><span class="swK">N</span> <span class="swV">—</span></span>
+  </div>
+  <div class="swAux">
+    <span class="swAuxItem">云 L/M/H —/—/—%</span>
+    <span class="swAuxItem">月角 —°</span>
+  </div>
+`;
    
    const setStatusDots = (items) => { if (uiReady()) window.UI.setStatusDots(items); };
    const setStatusText = (t) => { if (uiReady()) window.UI.setStatusText(t); };
@@ -337,7 +354,7 @@ function _cloudTotal(low, mid, high){
       if(abs(lat) < 50){
         safeHTML($("oneHeroLabel"), `<span style="color:${cColor(1)} !important;">1分 不可观测</span>`);
         safeText($("oneHeroMeta"), "—");
-        safeText($("swLine"), "V — ｜ Bt — ｜ Bz — ｜ N —");
+        safeHTML($("swLine"), SW_PLACEHOLDER_HTML);
         safeText($("swMeta"), "—");
 
         const labels = ["+10m","+20m","+30m","+40m","+50m","+60m"];
@@ -536,7 +553,7 @@ function _cloudTotal(low, mid, high){
       if (rt.status === "INVALID") {
         safeText($("oneHeroLabel"), "—");
         safeText($("oneHeroMeta"), "—");
-        safeText($("swLine"), "V — ｜ Bt — ｜ Bz — ｜ N —");
+        safeHTML($("swLine"), SW_PLACEHOLDER_HTML);
         safeText($("swMeta"), "太阳风数据不可用（断流>3小时）");
         const labels = ["+10m","+20m","+30m","+40m","+50m","+60m"];
         const vals = [0,0,0,0,0,0];
