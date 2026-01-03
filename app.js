@@ -31,7 +31,35 @@
    
    const initTabs = () => { if (uiReady() && typeof window.UI.initTabs === "function") window.UI.initTabs(); };
    const initAbout = () => { if (uiReady() && typeof window.UI.initAbout === "function") window.UI.initAbout(); };
+
    const showAlertModal = (html) => { if (uiReady() && typeof window.UI.showAlertModal === "function") window.UI.showAlertModal(html); };
+
+   // --- Alert overlay helpers (do not rely on UI.showAlertModal, which may not toggle .show) ---
+   function openAlertOverlay(html){
+     try{
+       const body = document.getElementById("alertBody");
+       if(body) body.innerHTML = html;
+       const overlay = document.getElementById("alertOverlay");
+       if(overlay){
+         overlay.classList.add("show");
+         overlay.setAttribute("aria-hidden", "false");
+       }
+     }catch(e){
+       console.error("[AuroraCapture] openAlertOverlay error:", e);
+     }
+   }
+
+   function closeAlertOverlay(){
+     try{
+       const overlay = document.getElementById("alertOverlay");
+       if(overlay){
+         overlay.classList.remove("show");
+         overlay.setAttribute("aria-hidden", "true");
+       }
+     }catch(e){
+       console.error("[AuroraCapture] closeAlertOverlay error:", e);
+     }
+   }
 
    // --- astro/model helpers from UI.js (must be proxied too) ---
    const obsGate = (d, lat, lon) =>
@@ -432,14 +460,28 @@ function _cloudTotal(low, mid, high){
       if(hasMissing){
         const missCN = missingKeys.map(k => (k==="v"?"V":k==="n"?"N":k==="bt"?"Bt":k==="bz"?"Bz":k)).join("、");
 
-        // 数据可信度提醒：有值但不完整，建议谨慎参考
+        // 数据可信度提醒：右侧可点击查看详情（不自动强弹）
         setStatusText("⚠️ 数据可信度提醒");
-        showAlertModal(`
+
+        const warnHtml = `
           <div>NOAA 数据口径变动或部分数据缺失：<b>${escapeHTML(missCN)}</b></div>
           <div class="mutedLine">当前预测可信度较低，建议谨慎参考。</div>
-        `);
+        `;
+
+        const st = document.getElementById("statusText");
+        if(st){
+          st.classList.add("warn");
+          st.title = "点击查看数据可信度说明";
+          st.onclick = () => openAlertOverlay(warnHtml);
+        }
       }else{
         setStatusText("已生成。");
+        const st = document.getElementById("statusText");
+        if(st){
+          st.classList.remove("warn");
+          st.title = "";
+          st.onclick = null;
+        }
       }
 
       const mlat = window.Model.approxMagLat(lat, lon);
@@ -832,6 +874,10 @@ function _cloudTotal(low, mid, high){
     if($("lon") && !$("lon").value) $("lon").value = "122.35";
 
     $("btnRun")?.addEventListener("click", run);
+
+    // Alert modal close buttons
+    document.getElementById("alertClose")?.addEventListener("click", closeAlertOverlay);
+    document.getElementById("alertOk")?.addEventListener("click", closeAlertOverlay);
 
   }
       document.addEventListener("DOMContentLoaded", () => {
