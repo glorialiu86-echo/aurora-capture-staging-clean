@@ -917,15 +917,21 @@ canvas{width:100% !important; height:100% !important}
 #t3 .fullWidth + .explain{ margin-top: 14px; }
 
 /* 72小时顶部说明：让两行文字有“呼吸感”，避免贴边 */
+/* 让 72h 面板第一张卡片整体离 tabs 更远一点 */
+#t72 > .card:first-child{
+  margin-top: 10px;
+}
+
+/* 让标题区离卡片顶部更远，避免“顶格/穿模” */
 #t72 .hero{
-  padding: 18px 16px 16px;
+  padding: 24px 16px 18px;
 }
 #t72 .hero .k{
-  margin-top: 2px;
-  margin-bottom: 10px;
+  margin-top: 0;
+  margin-bottom: 12px;
 }
 #t72 .hero .small{
-  margin-top: 4px;
+  margin-top: 6px;
 }
 
 /* 72h 分数列：更像主视觉数字 */
@@ -1380,4 +1386,19 @@ section > .fullWidthStack {
 /* 72小时：面板顶部留一点呼吸，避免标题顶格 */
 #t72{
   padding-top: 10px;
+}
+/* 1小时：主要影响因素贴左，不要贴右 */
+.heroTopRow{
+  display: block !important;
+  margin-top: 10px !important;
+}
+
+#oneBlockers{
+  width: 100% !important;
+  margin-left: 0 !important;
+  text-align: left !important;
+}
+
+#oneBlockers .blockerExplain{
+  justify-content: flex-start !important;
 }
