@@ -959,7 +959,7 @@ canvas{width:100% !important; height:100% !important}
   .big2{font-size: 22px}
   .chartWrap{height: 220px}
   .subtitle{line-height:1.4}
-  .brandRow{align-items:flex-start}
+  .brandRow{align-items:center}
   .threeSlots{ gap: 12px; }
   .threeSlots .slot{ padding: 10px 12px; }
 
@@ -1166,12 +1166,12 @@ section > .fullWidthStack {
   .wrap{ margin: 18px auto 34px; }
 
   .brandRow{
-    align-items: flex-start;
+    align-items: center;
     gap: 12px;
   }
 
   .brand{
-    align-items: flex-start;
+    align-items: center;
     gap: 12px;
   }
 
