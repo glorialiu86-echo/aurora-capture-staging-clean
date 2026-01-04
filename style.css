@@ -195,14 +195,18 @@ body{
   gap:14px;
   align-items:center;
   min-width: 0;
+
+  /* Let logo scale with brand title size (desktop first) */
+  font-size: clamp(22px, 3.1vw, 28px);
 }
 .logo{
-  width:44px;
-  height:44px;
+  /* scale by brand font-size so logo naturally matches title height */
+  width: 1.35em;
+  height: 1.35em;
   display:grid;
   place-items:center;
   border:1px solid var(--stroke);
-  border-radius:14px;
+  border-radius: .42em;
   background: rgba(255,255,255,.02);
   box-shadow: var(--shadow);
   overflow: hidden; /* 让发光边缘更干净 */
@@ -230,7 +234,7 @@ body{
 .titleBlock h1,
 .brandTitle{
   margin:0;
-  font-size: 26px;
+  font-size: 1em;
   letter-spacing:.2px;
   line-height: 1.1;
   display:flex;
@@ -890,10 +894,14 @@ canvas{width:100% !important; height:100% !important}
     margin-top: 8px;
   }
 
-.topLink{
-  height: 28px;
-  font-size: 11px;
-}
+  /* Mobile: keep brand big, but keep logo proportional to title */
+  .brand{ font-size: clamp(22px, 5.6vw, 30px); }
+  .logo{ width: 1.25em; height: 1.25em; border-radius: .40em; }
+
+  .topLink{
+    height: 28px;
+    font-size: 11px;
+  }
 }
 /* ===============================
    72小时：概览条（A）
@@ -1420,20 +1428,17 @@ section > .fullWidthStack {
   .brand{
     align-items: center;
     gap: 12px;
+    font-size: clamp(22px, 6.6vw, 30px);
   }
 
-  /* 小屏也尽量大：logo 仍然是主视觉 */
-  .logo{
-    width: 58px;
-    height: 58px;
-    border-radius: 16px;
-  }
+  /* Small screen: still prominent, but not overpowering */
+  .logo{ width: 1.20em; height: 1.20em; border-radius: .38em; }
 
   .titleRow{ gap: 10px; }
 
   .titleRow h1,
   .brandTitle{
-    font-size: clamp(22px, 6.6vw, 30px);
+    font-size: 1em;
     line-height: 1.05;
     margin: 0;
   }
