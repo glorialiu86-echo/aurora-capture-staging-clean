@@ -206,6 +206,24 @@
       "Not sure about coordinates? Try: <b>Google Maps</b> (drop a pin and read lat/lon), or Tencent Maps picker: https://lbs.qq.com/getPoint/."
     );
 
+    // 4) Static blocks added in index.html: unit pill + EN explain cards (CN must remain unchanged)
+    setBilingualText($("unit10m"), "Unit: 10 min");
+
+    const toggleExplainPair = (enId) => {
+      const enCard = $(enId);
+      if(!enCard) return;
+      // CN card is the immediate previous sibling (we inserted EN card right after CN card)
+      const cnCard = enCard.previousElementSibling;
+      if(cnCard && cnCard.classList && cnCard.classList.contains("explain")){
+        cnCard.classList.toggle("hidden", lang === "en");
+      }
+      enCard.classList.toggle("hidden", lang !== "en");
+    };
+
+    toggleExplainPair("oneExplainEN");
+    toggleExplainPair("threeExplainEN");
+    toggleExplainPair("outlookExplainEN");
+
     // NOTE: Dynamic outputs (conclusion text, reasons, etc.) are handled by app.js based on UI.getLang().
   }
 

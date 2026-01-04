@@ -10,7 +10,7 @@
   <!-- Description for link preview -->
   <meta name="description" content="现在要不要出门追光？一键给出观测窗口">
   <meta property="og:description" content="现在要不要出门追光？一键给出观测窗口">
-  <link rel="stylesheet" href="./style.css?v=0307" />
+  <link rel="stylesheet" href="./style.css?v=0308" />
   <!-- SunCalc: 太阳/月亮高度（仅后台计算，不在前台露出） -->
   <script src="https://unpkg.com/suncalc@1.9.0/suncalc.js"></script>
   <!-- Chart.js: 1小时 C值柱状图 -->
@@ -130,7 +130,7 @@
               <div class="k">1小时 C值（Capture）柱状图</div>
               <div class="small">C值范围 1–5，越高越建议投入。</div>
             </div>
-            <div class="pill">单位：10分钟</div>
+            <div class="pill" id="unit10m">单位：10分钟</div>
           </div>
           <div class="chartWrap">
             <canvas id="cChart"></canvas>
@@ -145,6 +145,17 @@
             <li><b>3分 可蹲守</b>：存在机会，建议架机等待触发。</li>
             <li><b>2分 低概率</b>：机会小，可低成本尝试。</li>
             <li><b>1分 不可观测</b>：当前时段不建议投入。</li>
+          </ul>
+        </div>
+
+        <div class="card explain hidden" id="oneExplainEN">
+          <div class="k">1H Conclusion Levels (C-Index)</div>
+          <ul class="bullets">
+            <li><b>C5 Strongly Recommended</b>: High payoff. Go now.</li>
+            <li><b>C4 Worth Going Out</b>: Solid conditions. Prepare and test shots.</li>
+            <li><b>C3 Worth Waiting</b>: There is a chance. Set up and watch for triggers.</li>
+            <li><b>C2 Low Chance</b>: Small opportunity. Try only at low cost.</li>
+            <li><b>C1 Not Observable</b>: Not worth investing time right now.</li>
           </ul>
         </div>
       </div>
@@ -209,6 +220,17 @@
         </ul>
       </div>
 
+      <div class="card explain hidden" id="threeExplainEN">
+        <div class="k">3H Conclusion Levels (C-Index)</div>
+        <ul class="bullets">
+          <li><b>C5 Strongly Recommended</b>: High payoff. Go now.</li>
+          <li><b>C4 Worth Going Out</b>: Solid conditions. Prepare and test shots.</li>
+          <li><b>C3 Worth Waiting</b>: There is a chance. Set up and watch for triggers.</li>
+          <li><b>C2 Low Chance</b>: Small opportunity. Try only at low cost.</li>
+          <li><b>C1 Not Observable</b>: Not worth investing time right now.</li>
+        </ul>
+      </div>
+
     </section>
 
     <!-- 72小时 -->
@@ -258,11 +280,22 @@
           <li><b>1分 不可观测</b>：不建议投入。</li>
         </ul>
       </div>
+
+      <div class="card explain hidden" id="outlookExplainEN">
+        <div class="k">72H Conclusion Levels (C-Index)</div>
+        <ul class="bullets">
+          <li><b>C5 Strongly Recommended</b>: Stronger background + better delivery. Plan ahead.</li>
+          <li><b>C4 Worth Going Out</b>: A real chance. Check clouds and the 1H module tonight.</li>
+          <li><b>C3 Worth Waiting</b>: Limited opportunity unless your location/sky is excellent.</li>
+          <li><b>C2 Low Chance</b>: Overall weak. Early investment is not worth it.</li>
+          <li><b>C1 Not Observable</b>: Not recommended to invest effort.</li>
+        </ul>
+      </div>
     </section>
 
     <footer class="foot">
       数据源：NOAA SWPC（实时太阳风、OVATION nowcast、Kp 预报）与 Open-Meteo 云量预报。磁纬（MLAT）当前为估算（偶极近似）；若接入 AACGMv2 换算服务，将自动切换为真实 AACGMv2。
-      <br>佑酱已吐血更新到版本号：v3.0.0307<p></p>
+      <br>佑酱已吐血更新到版本号：v3.0.0308<p></p>
     </footer>
   </div>
 
@@ -464,10 +497,10 @@
     };
   </script>
   <!-- your modules -->
-  <script defer src="./adapter.js?v=0307"></script>
-  <script defer src="./ui.js?v=0307"></script>
-  <script defer src="./model.js?v=0307"></script>
-  <script defer src="./app.js?v=0307"></script>
+  <script defer src="./adapter.js?v=0308"></script>
+  <script defer src="./ui.js?v=0308"></script>
+  <script defer src="./model.js?v=0308"></script>
+  <script defer src="./app.js?v=0308"></script>
   
 </body>
 </html>

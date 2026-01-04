@@ -359,6 +359,76 @@ function translateConclusionIfEN(score5, cnPhrase){
 }
 
 // ===============================
+// Language: dynamic text translation (EN only; CN remains unchanged)
+// ===============================
+function _tIfEN(cnText, enText){
+  return (getLangSafe() === "en") ? (enText || cnText) : cnText;
+}
+
+function translateReasonIfEN(cnText){
+  const cnRaw = String(cnText || "");
+  const cn = cnRaw.trim();
+  if(getLangSafe() !== "en") return cn;
+
+  // Exact/near-exact mappings first (stable, no surprises)
+  const map = {
+    // energy / coupling
+    "能量注入弱，难以形成有效极光": "Weak energy coupling. Effective aurora is unlikely.",
+    "能量注入偏弱，难以形成有效极光": "Weak energy coupling. Effective aurora is unlikely.",
+    "能量输入偏弱，难以形成有效极光": "Weak energy coupling. Effective aurora is unlikely.",
+    "能量注入弱": "Weak energy coupling.",
+
+    // bright sky (sun/moon merged)
+    "天色偏亮，微弱极光难以分辨": "Bright sky. Faint aurora is hard to discern.",
+    "天空偏亮，微弱极光难以分辨": "Bright sky. Faint aurora is hard to discern.",
+    "天色偏亮": "Bright sky.",
+
+    // clouds
+    "天空被云层遮挡，不利于观测": "Cloud cover blocks the sky.",
+    "天空被云层遮挡": "Cloud cover blocks the sky.",
+    "云层遮挡，不利于观测": "Cloud cover blocks the sky.",
+    "云层遮挡": "Cloud cover blocks the sky.",
+    "云量过高，不利于观测": "Too cloudy for reliable viewing.",
+    "云量过高": "Too cloudy for reliable viewing.",
+
+    // generic / fallback strings sometimes produced by future edits
+    "不可观测": "Not observable.",
+    "—": "—",
+  };
+
+  if(map[cn]) return map[cn];
+
+  // Keyword-based fallbacks (cover future phrasing changes without touching CN path)
+  const s = cn;
+
+  // Clouds
+  if(s.includes("云")){
+    // If wording hints at heavy cloud / blocking
+    if(s.includes("遮挡") || s.includes("过高") || s.includes("很厚") || s.includes("覆盖")){
+      return "Cloud cover blocks the sky.";
+    }
+    return "Cloud conditions are unfavorable.";
+  }
+
+  // Bright sky (sun/moon/twilight)
+  if(s.includes("天色") || s.includes("天空") || s.includes("偏亮") || s.includes("月") || s.includes("太阳") || s.includes("晨") || s.includes("暮")){
+    return "Bright sky. Faint aurora is hard to discern.";
+  }
+
+  // Energy / coupling / geomagnetic drive
+  if(s.includes("能量") || s.includes("注入") || s.includes("输入") || s.includes("耦合") || s.includes("Bz") || s.includes("BT") || s.includes("Bt") || s.includes("南") || s.includes("北")){
+    return "Weak geomagnetic driving. Effective aurora is unlikely.";
+  }
+
+  // Default: keep CN (better than wrong EN)
+  return cn;
+}
+
+function primaryPrefixIfEN(){
+  return (getLangSafe() === "en") ? "Primary factor: " : "主要影响因素：";
+}
+
+// ===============================
 // Cloud + 72h helper functions (stop-gap, stable)
 // ===============================
 
@@ -1550,7 +1620,7 @@ function fillCurrentLocation(){
 
           blockerHTML = `
             <div class="blockerExplain s${heroScore}">
-              <div>主要影响因素：${escapeHTML(primary || "—")}</div>
+              <div>${escapeHTML(primaryPrefixIfEN() + (translateReasonIfEN(primary) || "—"))}</div>
             </div>
           `;
         }
@@ -1701,9 +1771,9 @@ function fillCurrentLocation(){
       const best = slots.filter(s => s.score5 === maxScore);
 
       if(best.length >= 2){
-        safeText($("threeState"), "观测机会均等");
+        safeText($("threeState"), _tIfEN("观测机会均等", "Observation opportunities are equal"));
       }else{
-        safeText($("threeState"), "最佳观测窗口");
+        safeText($("threeState"), _tIfEN("最佳观测窗口", "Best viewing window"));
       }
 
       const fmtWin = (s) => `${fmtHM(s.start)}–${fmtHM(s.end)}`;
@@ -1727,14 +1797,22 @@ function fillCurrentLocation(){
         const slotConclusionInner = `${escapeHTML(String(slotConclusionText))}`;
         safeHTML($("threeSlot"+i+"Conclusion"), maybePlusWrap(slotConclusionInner, slotAllowPlus));
 
-        // 仅显示一个主要影响因素（当 score<=2 且有 factorText）
-        const reason = (score <= 2 && s.factorText)
-          ? `主要影响因素：${s.factorText}`
-          : (score === 1 ? "主要影响因素：天色偏亮，微弱极光难以分辨" : "—");
+      // 仅显示一个主要影响因素（当 score<=2 且有 factorText）
+      const reasonCN = (score <= 2 && s.factorText)
+        ? `主要影响因素：${s.factorText}`
+        : (score === 1 ? "主要影响因素：天色偏亮，微弱极光难以分辨" : "—");
 
-        // Scheme A: add trend explanation line when "+" is on
-        const reasonHtml = `<div>${escapeHTML(reason)}</div>` + (trendPlus?.on ? trendExplainInline() : "");
-        safeHTML($("threeSlot"+i+"Reason"), reasonHtml);
+      let reason = reasonCN;
+      if(getLangSafe() === "en"){
+        if(reasonCN.startsWith("主要影响因素：")){
+          const core = reasonCN.replace(/^主要影响因素：\s*/, "");
+          reason = primaryPrefixIfEN() + translateReasonIfEN(core);
+        }
+      }
+
+      // Scheme A: add trend explanation line when "+" is on
+      const reasonHtml = `<div>${escapeHTML(reason)}</div>` + (trendPlus?.on ? trendExplainInline() : "");
+      safeHTML($("threeSlot"+i+"Reason"), reasonHtml);
 
         const card = $("threeSlot"+i);
         if(card) card.className = `dayCard ${lab.cls}${s.score5 === maxScore ? " best" : ""}`;
