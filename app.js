@@ -1790,7 +1790,7 @@ function fillCurrentLocation(){
           factorText = ex?.primaryText ? String(ex.primaryText) : "";
         }
 
-        slots.push({ start, end, mid, score5, factorText, cloud3 });
+        slots.push({ start, end, mid, score5, factorText, cloud3, gate });
       }
 
       // 并列最佳逻辑：同分不选靠前，提示“机会均等”
@@ -1806,6 +1806,29 @@ function fillCurrentLocation(){
 
       // one-line hint under the big word
       safeText($("threeBurst"), burstHintCN);
+
+      // --- Render 3 hourly cards (restore) ---
+      // UI ids expected:
+      //  threeSlot0/1/2 (card), threeSlot{n}Time, threeSlot{n}Conclusion, threeSlot{n}Note, threeSlot{n}Reason
+      slots.forEach((s, i) => {
+        const lab = (window.Model && typeof window.Model.labelByScore5 === "function")
+          ? window.Model.labelByScore5(s.score5)
+          : { t: (s.score5 >= 4 ? "值得出门" : s.score5 === 3 ? "可蹲守" : s.score5 === 2 ? "低概率" : "不可观测"), score: s.score5 };
+
+        const timeText = `${fmtHM(s.start)}–${fmtHM(s.end)}`;
+        safeText($("threeSlot" + i + "Time"), timeText);
+        safeText($("threeSlot" + i + "Conclusion"), translateConclusionTextIfEN(lab.t));
+        safeText($("threeSlot" + i + "Note"), actionNote1h(s.score5, s.gate));
+
+        // reason line: show a single primary factor when we have it; otherwise keep it minimal
+        const reason = (s.factorText && String(s.factorText).trim())
+          ? (primaryPrefixIfEN() + translateReasonIfEN(String(s.factorText)))
+          : "";
+        safeText($("threeSlot" + i + "Reason"), reason);
+
+        const card = $("threeSlot" + i);
+        if(card) card.className = `dayCard ${cClass(s.score5)}`;
+      });
 
       // 如果你以后想在 hero 里加一行“并列最佳/最佳窗口”，这里预留：
       // safeText($("threeBestLine"), bestLine);
