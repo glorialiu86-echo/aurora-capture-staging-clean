@@ -10,7 +10,7 @@
   <!-- Description for link preview -->
   <meta name="description" content="现在要不要出门追光？一键给出观测窗口">
   <meta property="og:description" content="现在要不要出门追光？一键给出观测窗口">
-  <link rel="stylesheet" href="./style.css?v=0309" />
+  <link rel="stylesheet" href="./style.css?v=0311" />
   <!-- SunCalc: 太阳/月亮高度（仅后台计算，不在前台露出） -->
   <script src="https://unpkg.com/suncalc@1.9.0/suncalc.js"></script>
   <!-- Chart.js: 1小时 C值柱状图 -->
@@ -89,7 +89,7 @@
 
         <!-- 保留原来的数据锚点，JS 才能填进去 -->
         <div class="big" id="oneHeroLabel">—</div>
-        <div class="small" id="oneHeroMeta">—</div>
+        <div class="small" id="oneHeroMeta" style="color:rgba(255,255,255,.84); font-size:13px; font-weight:600; margin-top:4px;">—</div>
 
         <!-- 右侧解释预留区（可选） -->
         <div class="heroTopRow" style="margin-top:12px;">
@@ -128,7 +128,7 @@
           <div class="chartHead">
             <div>
               <div class="k">1小时 C值（Capture）柱状图</div>
-              <div class="small">C值范围 1–5，越高越建议投入。</div>
+              <div class="small">C值越高，越建议投入。</div>
             </div>
             <div class="pill" id="unit10m">单位：10分钟</div>
           </div>
@@ -140,11 +140,11 @@
         <div class="card explain">
           <div class="k">1小时预测结论分级（C值）</div>
           <ul class="bullets">
-            <li><b>5分 强烈推荐</b>：投入回报高，建议立即行动。</li>
-            <li><b>4分 值得出门</b>：条件不错，建议准备与试拍。</li>
-            <li><b>3分 可蹲守</b>：存在机会，建议架机等待触发。</li>
-            <li><b>2分 低概率</b>：机会小，可低成本尝试。</li>
-            <li><b>1分 不可观测</b>：当前时段不建议投入。</li>
+            <li><b>【C值5】强烈推荐</b>：投入回报高，建议立即行动。</li>
+            <li><b>【C值4】值得出门</b>：条件不错，建议准备与试拍。</li>
+            <li><b>【C值3】可蹲守</b>：存在机会，建议架机等待触发。</li>
+            <li><b>【C值2】低概率</b>：机会小，可低成本尝试。</li>
+            <li><b>【C值1】不可观测</b>：当前时段不建议投入。</li>
           </ul>
         </div>
 
@@ -173,7 +173,8 @@
           <div class="dayHead">
             <div class="dayLabel" id="threeSlot0Time">—</div>
           </div>
-          <div class="dayConclusion" id="threeSlot0Conclusion">1分 不可观测</div>
+          <div class="dayConclusion" id="threeSlot0Conclusion">不可观测</div>
+          <div class="dayNote" id="threeSlot0Note" style="color:rgba(255,255,255,.84); font-size:13px; font-weight:600; margin-top:4px;">当前时段不建议投入。</div>
           <div class="dayBasis" id="threeSlot0Reason">—</div>
         </div>
 
@@ -182,6 +183,7 @@
             <div class="dayLabel" id="threeSlot1Time">—</div>
           </div>
           <div class="dayConclusion" id="threeSlot1Conclusion">—</div>
+          <div class="dayNote" id="threeSlot1Note" style="color:rgba(255,255,255,.84); font-size:13px; font-weight:600; margin-top:4px;">—</div>
           <div class="dayBasis" id="threeSlot1Reason">—</div>
         </div>
 
@@ -190,6 +192,7 @@
             <div class="dayLabel" id="threeSlot2Time">—</div>
           </div>
           <div class="dayConclusion" id="threeSlot2Conclusion">—</div>
+          <div class="dayNote" id="threeSlot2Note" style="color:rgba(255,255,255,.84); font-size:13px; font-weight:600; margin-top:4px;">—</div>
           <div class="dayBasis" id="threeSlot2Reason">—</div>
         </div>
 
@@ -213,11 +216,11 @@
       <div class="card explain">
         <div class="k">3小时结论分级（C值）</div>
         <ul class="bullets">
-          <li><b>5分 强烈推荐</b>：投入回报高，建议立即行动。</li>
-          <li><b>4分 值得出门</b>：条件不错，建议准备与试拍。</li>
-          <li><b>3分 可蹲守</b>：存在机会，建议架机等待触发。</li>
-          <li><b>2分 低概率</b>：机会小，可低成本尝试。</li>
-          <li><b>1分 不可观测</b>：当前时段不建议投入。</li>
+          <li><b>【C值5】强烈推荐</b>：投入回报高，建议立即行动。</li>
+          <li><b>【C值4】值得出门</b>：条件不错，建议准备与试拍。</li>
+          <li><b>【C值3】可蹲守</b>：存在机会，建议架机等待触发。</li>
+          <li><b>【C值2】低概率</b>：机会小，可低成本尝试。</li>
+          <li><b>【C值1】不可观测</b>：当前时段不建议投入。</li>
         </ul>
       </div>
 
@@ -238,7 +241,7 @@
     <section id="t72" class="pane">
       <div class="card">
         <div class="k">72小时范围预测</div>
-        <div class="small">按天预测“可能性区间”，无法细致到具体时刻。</div>
+        <div class="small">按天评估极光出现的可能性，用于行程与时间规划。</div>
 
         <!-- 72h 三列日卡：今天 / 明天 / 后天（由 app.js 动态填充） -->
         <div class="daysTri" id="daysTri">
@@ -248,6 +251,7 @@
               <div class="dayDate" id="day0Date">—</div>
             </div>
             <div class="dayConclusion" id="day0Conclusion">—</div>
+            <div class="dayNote" id="day0Note" style="color:rgba(255,255,255,.84); font-size:13px; font-weight:600; margin-top:4px;">—</div>
             <div class="dayBasis" id="day0Basis">等待生成。</div>
           </div>
 
@@ -257,6 +261,7 @@
               <div class="dayDate" id="day1Date">—</div>
             </div>
             <div class="dayConclusion" id="day1Conclusion">—</div>
+            <div class="dayNote" id="day1Note" style="color:rgba(255,255,255,.84); font-size:13px; font-weight:600; margin-top:4px;">—</div>
             <div class="dayBasis" id="day1Basis">等待生成。</div>
           </div>
 
@@ -266,6 +271,7 @@
               <div class="dayDate" id="day2Date">—</div>
             </div>
             <div class="dayConclusion" id="day2Conclusion">—</div>
+            <div class="dayNote" id="day2Note" style="color:rgba(255,255,255,.84); font-size:13px; font-weight:600; margin-top:4px;">—</div>
             <div class="dayBasis" id="day2Basis">等待生成。</div>
           </div>
         </div>
@@ -274,11 +280,11 @@
       <div class="card explain">
         <div class="k">72小时结论分级（C值）</div>
         <ul class="bullets">
-          <li><b>5分 强烈推荐</b>：能量背景+送达能力更强，值得提前规划。</li>
-          <li><b>4分 值得出门</b>：存在机会，重点看云与当晚即时模块。</li>
-          <li><b>3分 可蹲守</b>：机会少，除非位置/条件极佳。</li>
-          <li><b>2分 低概率</b>：综合偏弱，提前投入意义不大。</li>
-          <li><b>1分 不可观测</b>：不建议投入。</li>
+          <li><b>【C值5】强烈推荐 强烈推荐</b>：能量背景+送达能力更强，值得提前规划。</li>
+          <li><b>【C值4】值得出门</b>：存在机会，重点看云与当晚即时模块。</li>
+          <li><b>【C值3】可蹲守</b>：机会少，除非位置/条件极佳。</li>
+          <li><b>【C值2】低概率</b>：综合偏弱，提前投入意义不大。</li>
+          <li><b>【C值1】不可观测</b>：不建议投入。</li>
         </ul>
       </div>
 
@@ -296,7 +302,7 @@
 
     <footer class="foot">
       数据源：NOAA SWPC（实时太阳风、OVATION nowcast、Kp 预报）与 Open-Meteo 云量预报。磁纬（MLAT）当前为估算（偶极近似）；若接入 AACGMv2 换算服务，将自动切换为真实 AACGMv2。
-      <br>佑酱已吐血更新到版本号：v3.0.0309
+      <br>佑酱已吐血更新到版本号：v3.0.0311
     </footer>
   </div>
 
@@ -498,10 +504,10 @@
     };
   </script>
   <!-- your modules -->
-  <script defer src="./adapter.js?v=0309"></script>
-  <script defer src="./ui.js?v=0309"></script>
-  <script defer src="./model.js?v=0309"></script>
-  <script defer src="./app.js?v=0309"></script>
+  <script defer src="./adapter.js?v=0311"></script>
+  <script defer src="./ui.js?v=0311"></script>
+  <script defer src="./model.js?v=0311"></script>
+  <script defer src="./app.js?v=0311"></script>
   
 </body>
 </html>

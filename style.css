@@ -472,6 +472,34 @@ input::placeholder{color:rgba(255,255,255,.35)}
   font-weight: 750;
 }
 .small{color:var(--muted2); font-size:12px; line-height:1.45}
+
+/* ===============================
+   行动建议（结论下方注释）：更明显，不要像脚注
+   =============================== */
+
+/* 1小时主结论下方的行动建议 */
+#oneHeroMeta{
+  color: rgba(255,255,255,.84) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  margin-top: 4px !important;
+  line-height: 1.35;
+}
+
+/* 3小时/72小时卡片结论下方的行动建议 */
+.dayNote{
+  color: rgba(255,255,255,.84) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  margin-top: 4px !important;
+  margin-bottom: 8px;
+  line-height: 1.35;
+}
+
+/* 结论和行动建议之间别太松（为新增 .dayNote 腾位置） */
+.dayConclusion{
+  margin: 6px 0 6px;
+}
 .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace}
 
 /* 通用弱化行（用于提示/解释） */
@@ -1342,4 +1370,14 @@ section > .fullWidthStack {
     font-weight: 600;
     line-height: 1.2;
   }
+}
+
+/* 3小时：小时卡片组与下方模块留出硬间隔 */
+#threeTri{
+  margin-bottom: 16px;
+}
+
+/* 72小时：面板顶部留一点呼吸，避免标题顶格 */
+#t72{
+  padding-top: 10px;
 }

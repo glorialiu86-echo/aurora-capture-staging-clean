@@ -336,16 +336,10 @@ function getLangSafe(){
   return "cn";
 }
 
-function translateConclusionIfEN(score5, cnPhrase){
-  const s = Math.max(1, Math.min(5, Math.round(Number(score5) || 1)));
-  const cn = String(cnPhrase || "").trim();
+function translateConclusionTextIfEN(cnPhrase){
+  const cn = String(cnPhrase || "").trim() || "不可观测";
+  if(getLangSafe() !== "en") return cn;
 
-  // CN: keep exact existing format
-  if(getLangSafe() !== "en"){
-    return `${s}分 ${cn || "不可观测"}`;
-  }
-
-  // EN: map phrase, keep score (no "分")
   const map = {
     "强烈推荐": "Highly Recommended",
     "值得出门": "Worth Going Out",
@@ -354,8 +348,7 @@ function translateConclusionIfEN(score5, cnPhrase){
     "不可观测": "Not Observable",
   };
 
-  const en = map[cn] || cn || "Not Observable";
-  return `${s} ${en}`;
+  return map[cn] || cn || "Not Observable";
 }
 
 // ===============================
@@ -426,6 +419,22 @@ function translateReasonIfEN(cnText){
 
 function primaryPrefixIfEN(){
   return (getLangSafe() === "en") ? "Primary factor: " : "主要影响因素：";
+}
+
+function actionNote1h(score5, gate){
+  const s = Math.max(1, Math.min(5, Math.round(Number(score5) || 1)));
+  // hardBlock also means not worth investing now
+  if(gate && gate.hardBlock) return _tIfEN("当前时段不建议投入。", "Not recommended to invest effort now.");
+  if(s <= 2) return _tIfEN("当前时段不建议投入。", "Not recommended to invest effort now.");
+  if(s === 3) return _tIfEN("可尝试短时观测。", "Try a short watch.");
+  return _tIfEN("值得出门尝试。", "Worth going out to try.");
+}
+
+function actionNote72h(score5){
+  const s = Math.max(1, Math.min(5, Math.round(Number(score5) || 1)));
+  if(s <= 2) return _tIfEN("暂不建议为此规划行程。", "Not recommended to plan a trip for this yet.");
+  if(s === 3) return _tIfEN("可提前关注，临近再决定。", "Keep an eye on it; decide closer to the date.");
+  return _tIfEN("值得提前规划行程。", "Worth planning ahead.");
 }
 
 // ===============================
@@ -1190,8 +1199,8 @@ function fillCurrentLocation(){
       if(Number.isFinite(absMlat) && absMlat < MLAT_HARD_STOP){
         showMlatHardStop(mlat);
 
-        safeHTML($("oneHeroLabel"), `<span style="color:${cColor(1)} !important;">${escapeHTML(translateConclusionIfEN(1, "不可观测"))}</span>`);
-        safeText($("oneHeroMeta"), "—");
+        safeHTML($("oneHeroLabel"), `<span style="color:${cColor(1)} !important;">${escapeHTML(translateConclusionTextIfEN("不可观测"))}</span>`);
+        safeText($("oneHeroMeta"), actionNote1h(1, { hardBlock:true }));
         safeHTML($("swLine"), SW_PLACEHOLDER_HTML);
         safeText($("swMeta"), "—");
 
@@ -1208,7 +1217,8 @@ function fillCurrentLocation(){
         // 3小时（三卡，与 72h 同模板）
         [0,1,2].forEach(i => {
           safeText($("threeSlot"+i+"Time"), "—");
-          safeText($("threeSlot"+i+"Conclusion"), translateConclusionIfEN(1, "不可观测"));
+          safeText($("threeSlot"+i+"Conclusion"), translateConclusionTextIfEN("不可观测"));
+          safeText($("threeSlot"+i+"Note"), actionNote1h(1, { hardBlock:true }));
           safeText($("threeSlot"+i+"Reason"), "不可观测。");
           const card = $("threeSlot"+i);
           if(card) card.className = "dayCard c1";
@@ -1217,7 +1227,8 @@ function fillCurrentLocation(){
         // 72h（三列日卡）
         [0,1,2].forEach(i => {
           safeText($("day"+i+"Date"), "—");
-          safeText($("day"+i+"Conclusion"), "1分 不可观测");
+          safeText($("day"+i+"Conclusion"), translateConclusionTextIfEN("不可观测"));
+          safeText($("day"+i+"Note"), actionNote72h(1));
           safeText($("day"+i+"Basis"), "不可观测。");
           const card = $("day"+i);
           if(card) card.className = "dayCard c1";
@@ -1552,7 +1563,7 @@ function fillCurrentLocation(){
       const heroObj = window.Model.labelByScore5(heroScore);
       // 1小时标题：整句跟随 C 值颜色（用 inline + !important 防止被 CSS 覆盖）
       const heroAllowPlus = (heroScore >= 2 && heroScore <= 4);
-      const heroLabelText = translateConclusionIfEN(heroObj.score, heroObj.t);
+      const heroLabelText = translateConclusionTextIfEN(heroObj.t);
       const heroLabelInner = `<span style="color:${cColor(heroObj.score)} !important;">${escapeHTML(String(heroLabelText))}</span>`;
       safeHTML(
         $("oneHeroLabel"),
@@ -1626,10 +1637,7 @@ function fillCurrentLocation(){
         }
       }catch(e){ blockerHTML = ""; }
 
-      safeHTML(
-        $("oneHeroMeta"),
-        `本地时间：${escapeHTML(fmtYMDHM(baseDate))} ・ OVATION：${escapeHTML(ovaTxt)}${trendExplainInline()}${blockerHTML}`
-      );
+      safeText($("oneHeroMeta"), actionNote1h(heroScore, heroGate));
 
       renderChart(labels, vals, cols);
 
@@ -1790,26 +1798,27 @@ function fillCurrentLocation(){
         const lab = map5[score] || map5[1];
 
         const slotAllowPlus = (score >= 2 && score <= 4);
-        const slotConclusionText = translateConclusionIfEN(score, lab.t);
+        const slotConclusionText = translateConclusionTextIfEN(lab.t);
         const slotConclusionInner = `${escapeHTML(String(slotConclusionText))}`;
         safeHTML($("threeSlot"+i+"Conclusion"), maybePlusWrap(slotConclusionInner, slotAllowPlus));
+        safeText($("threeSlot"+i+"Note"), actionNote1h(score, { hardBlock:false }));
 
-      // 仅显示一个主要影响因素（当 score<=2 且有 factorText）
-      const reasonCN = (score <= 2 && s.factorText)
-        ? `主要影响因素：${s.factorText}`
-        : (score === 1 ? "主要影响因素：天色偏亮，微弱极光难以分辨" : "—");
+        // 仅显示一个主要影响因素（当 score<=2 且有 factorText）
+        const reasonCN = (score <= 2 && s.factorText)
+          ? `主要影响因素：${s.factorText}`
+          : (score === 1 ? "主要影响因素：天色偏亮，微弱极光难以分辨" : "—");
 
-      let reason = reasonCN;
-      if(getLangSafe() === "en"){
-        if(reasonCN.startsWith("主要影响因素：")){
-          const core = reasonCN.replace(/^主要影响因素：\s*/, "");
-          reason = primaryPrefixIfEN() + translateReasonIfEN(core);
+        let reason = reasonCN;
+        if(getLangSafe() === "en"){
+          if(reasonCN.startsWith("主要影响因素：")){
+            const core = reasonCN.replace(/^主要影响因素：\s*/, "");
+            reason = primaryPrefixIfEN() + translateReasonIfEN(core);
+          }
         }
-      }
 
-      // Scheme A: add trend explanation line when "+" is on
-      const reasonHtml = `<div>${escapeHTML(reason)}</div>` + (trendPlus?.on ? trendExplainInline() : "");
-      safeHTML($("threeSlot"+i+"Reason"), reasonHtml);
+        // Scheme A: add trend explanation line when "+" is on
+        const reasonHtml = `<div>${escapeHTML(reason)}</div>` + (trendPlus?.on ? trendExplainInline() : "");
+        safeHTML($("threeSlot"+i+"Reason"), reasonHtml);
 
         const card = $("threeSlot"+i);
         if(card) card.className = `dayCard ${lab.cls}${s.score5 === maxScore ? " best" : ""}`;
@@ -1922,7 +1931,8 @@ function fillCurrentLocation(){
 
         // 写入到三列卡片
         safeText($("day"+i+"Date"), key);
-        safeText($("day"+i+"Conclusion"), translateConclusionIfEN(score5, lab.t));
+        safeText($("day"+i+"Conclusion"), translateConclusionTextIfEN(lab.t));
+        safeText($("day"+i+"Note"), actionNote72h(score5));
         safeHTML($("day"+i+"Basis"), basisHTML);
 
         const card = $("day"+i);
