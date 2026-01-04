@@ -192,7 +192,7 @@
     setBilingualText($("btnGeo"), "📍 Get Location");
     setBilingualText($("btnRun"), "✍️ Run Forecast");
     setBilingualText($("btnPredict"), "✍️ Run Forecast");
-    setBilingualText($("btnAbout"), "📖 About");
+    setBilingualText($("btnAbout"), "📖 User Guide");
 
     // Tabs
     const tabs = Array.from(document.querySelectorAll(".tab"));
