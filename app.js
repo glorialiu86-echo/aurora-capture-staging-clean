@@ -532,6 +532,25 @@ function _cloudTotal(low, mid, high){
 
       if(!Number.isFinite(lat) || !Number.isFinite(lon)){
         setStatusText("请先输入有效经纬度。");
+        openAlertOverlayFull(
+          "⚠️ 经纬度输入无效",
+          "请输入数字格式的纬度/经度。<br>纬度范围：<b>-90° ～ +90°</b>；经度范围：<b>-180° ～ +180°</b>。",
+          "示例：纬度 53.47，经度 122.35"
+        );
+        return;
+      }
+
+      // Range guard (hard)
+      if(lat < -90 || lat > 90 || lon < -180 || lon > 180){
+        setStatusText("⚠️ 经纬度超出范围");
+        openAlertOverlayFull(
+          "⚠️ 经纬度超出范围",
+          `你输入的是：<b>Latitude ${lat}</b>，<b>Longitude ${lon}</b>。<br>` +
+            `允许范围：<br>` +
+            `纬度（Latitude）：<b>-90° ～ +90°</b><br>` +
+            `经度（Longitude）：<b>-180° ～ +180°</b>` ,
+          "请修正后再点击生成。"
+        );
         return;
       }
       if(!window.SunCalc){
@@ -839,8 +858,9 @@ function _cloudTotal(low, mid, high){
         // 门槛/窗口（后台）
         if(gate.hardBlock){
           labels.push(fmtHM(d));
-          vals.push(0);
-          cols.push("rgba(255,255,255,.14)");
+          // hardBlock 也要渲染为 1 分（避免“空白图”错觉）
+          vals.push(1);
+          cols.push(cColor(1));
           if(i===0) heroScore = 1;
           continue;
         }else{
@@ -885,40 +905,48 @@ function _cloudTotal(low, mid, high){
         ovaTxt = ova?.ok ? "OK" : "—";
       }
       
-      // ----- 观测限制解释（C=1/2/3 时显示，且非 hardBlock）-----
+      // ----- 观测限制解释（C=1/2/3 时显示；hardBlock 也必须给出原因，避免空白）-----
       let blockerHTML = "";
       try{
-        if(heroScore <= 3 && heroGate && !heroGate.hardBlock && typeof window.Model?.explainUnobservable === "function"){
-          // 云量：三层云取最大值（不向用户区分高/中/低云）
-          let cloudMax = null;
-          if(clouds?.ok && clouds?.data){
-            const best = bestCloud3h(clouds.data, baseDate);
-            if(best && Number.isFinite(best.low) && Number.isFinite(best.mid) && Number.isFinite(best.high)){
-              cloudMax = Math.max(Number(best.low), Number(best.mid), Number(best.high));
+        if(heroScore <= 3 && heroGate){
+          let primary = "";
+
+          // hardBlock：统一口径（不再区分太阳/月亮）
+          if(heroGate.hardBlock){
+            primary = "天色偏亮，微弱极光难以分辨";
+          }else if(typeof window.Model?.explainUnobservable === "function"){
+            // 云量：三层云取最大值（不向用户区分高/中/低云）
+            let cloudMax = null;
+            if(clouds?.ok && clouds?.data){
+              const best = bestCloud3h(clouds.data, baseDate);
+              if(best && Number.isFinite(best.low) && Number.isFinite(best.mid) && Number.isFinite(best.high)){
+                cloudMax = Math.max(Number(best.low), Number(best.mid), Number(best.high));
+              }
             }
+
+            // 太阳 / 月亮高度
+            const sunAltDeg  = getSunAltDeg(baseDate, lat, lon);
+            const moonAltDeg = getMoonAltDeg(baseDate, lat, lon);
+
+            // 月相亮度 fraction（0~1）
+            let moonFrac = null;
+            try{
+              if(window.SunCalc?.getMoonIllumination){
+                const mi = SunCalc.getMoonIllumination(baseDate);
+                if(mi && mi.fraction != null) moonFrac = Number(mi.fraction);
+              }
+            }catch(_){ moonFrac = null; }
+
+            const ex = window.Model.explainUnobservable({ cloudMax, moonAltDeg, moonFrac, sunAltDeg });
+            primary = ex?.primaryText ? String(ex.primaryText) : "";
+
+            // 兜底：如果解释为空，也统一为“天色偏亮…”
+            if(!primary.trim()) primary = "天色偏亮，微弱极光难以分辨";
           }
-
-          // 太阳 / 月亮高度
-          const sunAltDeg  = getSunAltDeg(baseDate, lat, lon);
-          const moonAltDeg = getMoonAltDeg(baseDate, lat, lon);
-
-          // 月相亮度 fraction（0~1）
-          let moonFrac = null;
-          try{
-            if(window.SunCalc?.getMoonIllumination){
-              const mi = SunCalc.getMoonIllumination(baseDate);
-              if(mi && mi.fraction != null) moonFrac = Number(mi.fraction);
-            }
-          }catch(_){ moonFrac = null; }
-
-          const ex = window.Model.explainUnobservable({ cloudMax, moonAltDeg, moonFrac, sunAltDeg });
-
-          // 文案体系统一：只用“主要影响因素”（与 3 小时模块一致）
-          const title = "主要影响因素";
 
           blockerHTML = `
             <div class="blockerExplain s${heroScore}">
-              <div>${escapeHTML(title)}：${escapeHTML(ex.primaryText || "—")}</div>
+              <div>主要影响因素：${escapeHTML(primary || "—")}</div>
             </div>
           `;
         }
@@ -1036,9 +1064,11 @@ function _cloudTotal(low, mid, high){
         c10 = clamp(c10, 0, 10);
         const score5 = window.Model.score5FromC10(c10);
 
-        // 主要影响因素：只在低分（<=2）时展示一个
+        // 主要影响因素：只在低分（<=2）时展示一个；hardBlock 也给出统一原因
         let factorText = "";
-        if(score5 <= 2 && !gate.hardBlock && typeof window.Model?.explainUnobservable === "function"){
+        if(score5 <= 2 && gate.hardBlock){
+          factorText = "天色偏亮，微弱极光难以分辨";
+        }else if(score5 <= 2 && typeof window.Model?.explainUnobservable === "function"){
           const sunAltDeg  = getSunAltDeg(mid, lat, lon);
           const moonAltDeg = moonAlt;
 
@@ -1088,7 +1118,7 @@ function _cloudTotal(low, mid, high){
         // 仅显示一个主要影响因素（当 score<=2 且有 factorText）
         const reason = (score <= 2 && s.factorText)
           ? `主要影响因素：${s.factorText}`
-          : (score === 1 ? "当前时段不建议投入。" : "—");
+          : (score === 1 ? "主要影响因素：天色偏亮，微弱极光难以分辨" : "—");
         safeText($("threeSlot"+i+"Reason"), reason);
 
         const card = $("threeSlot"+i);

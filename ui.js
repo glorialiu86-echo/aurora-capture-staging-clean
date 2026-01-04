@@ -86,7 +86,9 @@
   // 后台：可观测性门槛（不解释）
   function obsGate(date, lat, lon){
     const s = getSunAltDeg(date, lat, lon);
-    return { hardBlock: s > 0, inWindow: s <= -12 };
+    // hardBlock: sky too bright for weak aurora (sun higher than -10°)
+    // inWindow: the "best" observing window (sun <= -12°)
+    return { hardBlock: s > -10, inWindow: s <= -12 };
   }
 
   // 月角软降权（不展示）
