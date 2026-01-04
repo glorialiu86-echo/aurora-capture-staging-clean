@@ -1428,6 +1428,13 @@ function fillCurrentLocation(){
         c10 = applyOvalC10(c10);
         c10 = clamp(c10, 0, 10);
 
+        // Low-density brightness attenuation (1h only)
+        // Rationale: when N < 1 cm^-3, brightness potential is reduced (edge-latitude friendly)
+        if(Number.isFinite(sw.n) && sw.n < 1){
+          c10 = c10 * 0.8;
+          c10 = clamp(c10, 0, 10);
+        }
+
         const s5 = window.Model.score5FromC10(c10); // 1..5
         labels.push(fmtHM(d));
         vals.push(s5);
@@ -1753,10 +1760,6 @@ function fillCurrentLocation(){
         const fMoon = soften(moonFactorByLat(lat, mAlt), 0.6);
         cDay10 *= fMoon;
 
-        cDay10 = clamp(cDay10, 0, 10);
-
-        // Aurora Oval soft constraint (backend-only)
-        cDay10 = applyOvalC10(cDay10);
         cDay10 = clamp(cDay10, 0, 10);
 
         let score5 = Math.round((cDay10 / 10) * 5);
