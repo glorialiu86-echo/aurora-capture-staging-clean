@@ -341,8 +341,27 @@ input::placeholder{color:rgba(255,255,255,.35)}
 }
 
 @media (max-width: 520px){
+  /* Mobile: keep tabs on the left and 工具介绍 button on the right, same row */
+  .tabs{
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    column-gap: 10px;
+    row-gap: 10px;
+  }
+
+  .tabsLeft{
+    min-width: 0;
+    gap: 8px;
+  }
+
   .btnHelp{
-    flex: 1 1 100%;
+    flex: 0 0 auto;
+    justify-self: end;
+    white-space: nowrap;
+    height: 32px;
+    padding: 0 10px;
+    font-size: 11px;
   }
 }
 .tab{
