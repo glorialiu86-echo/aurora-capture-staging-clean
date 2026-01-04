@@ -274,7 +274,7 @@
   const BlockerText = {
     [ObservationBlocker.CLOUD_COVER]: "天空被云层遮挡，不利于观测",
     [ObservationBlocker.BRIGHT_SKY]: "天色偏亮，微弱极光难以分辨",
-    [ObservationBlocker.LOW_AURORA_CONTRAST]: "极光亮度不足以被当前环境清晰分辨",
+    [ObservationBlocker.LOW_AURORA_CONTRAST]: "能量注入弱，难以形成有效极光",
   };
 
   // 优先级（最终只输出一个原因）：云 > 天色偏亮 > 对比度不足
