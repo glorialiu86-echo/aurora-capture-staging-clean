@@ -10,7 +10,7 @@
   <!-- Description for link preview -->
   <meta name="description" content="现在要不要出门追光？一键给出观测窗口">
   <meta property="og:description" content="现在要不要出门追光？一键给出观测窗口">
-  <link rel="stylesheet" href="./style.css?v=0314" />
+  <link rel="stylesheet" href="./style.css?v=0315" />
   <!-- SunCalc: 太阳/月亮高度（仅后台计算，不在前台露出） -->
   <script src="https://unpkg.com/suncalc@1.9.0/suncalc.js"></script>
   <!-- Chart.js: 1小时 C值柱状图 -->
@@ -21,9 +21,9 @@
     <header class="head">
       <div class="brandRow">
         <div class="brand">
-          <div class="logo">
-            <img class="logoImg" src="./assets/logo-v2.png" alt="Aurora Capture logo">
-          </div>
+        <div class="logo logoPlain">
+          <img class="logoImg" src="./assets/logo-v2.png" alt="Aurora Capture logo">
+        </div>
           <div class="titleBlock">
             <div class="titleRow">
               <h1 class="brandTitle"><span class="brandEn">Aurora Capture</span> <span class="brandCn">极光捕手</span></h1>
@@ -33,7 +33,7 @@
       </div>
 
       <div class="headRight">
-        <button id="btnAbout" type="button" class="btn ghost btnHelp">📖 工具介绍</button>
+        <button id="btnAbout" type="button" class="topLink" aria-label="工具介绍">工具介绍</button>
         <div class="langToggle" id="langToggle" aria-label="Language">
           <button type="button" class="langOpt" data-lang="cn">CN</button>
           <span class="langSep">|</span>
@@ -302,7 +302,7 @@
     </section>
 
     <footer class="foot">
-      佑酱已吐血更新到版本号：v3.0.0314
+      佑酱已吐血更新到版本号：v3.0.0315
       <br>数据源：NOAA SWPC（实时太阳风、OVATION nowcast、Kp 预报）与 Open-Meteo 云量预报。磁纬（MLAT）当前为估算（偶极近似）；若接入 AACGMv2 换算服务，将自动切换为真实 AACGMv2。
     </footer>
   </div>
@@ -504,10 +504,10 @@
     };
   </script>
   <!-- your modules -->
-  <script defer src="./adapter.js?v=0314"></script>
-  <script defer src="./ui.js?v=0314"></script>
-  <script defer src="./model.js?v=0314"></script>
-  <script defer src="./app.js?v=0314"></script>
+  <script defer src="./adapter.js?v=0315"></script>
+  <script defer src="./ui.js?v=0315"></script>
+  <script defer src="./model.js?v=0315"></script>
+  <script defer src="./app.js?v=0315"></script>
   
 </body>
 </html>
