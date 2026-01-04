@@ -78,7 +78,7 @@ body{
   margin: 26px auto 40px;
 }
 
-.head{ margin-bottom: 14px; }
+.head{ margin-bottom: 14px; position: relative; }
 
 .brandRow{
   display:flex;
@@ -149,6 +149,9 @@ body{
   display:flex;
   gap:10px;
   align-items:center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .cn{color:var(--muted)}
 .titleRow{display:flex; gap:10px; align-items:center}
@@ -698,6 +701,18 @@ canvas{width:100% !important; height:100% !important}
     padding: 4px 8px;
     font-size: 10px;
   }
+  /* Mobile: keep the language pill from affecting the brand flow */
+  .headRight{
+    position: absolute;
+    right: 0;
+    top: 0;
+    z-index: 5;
+  }
+
+  /* Reserve fixed room for the pill so the title NEVER wraps */
+  .brandRow{
+    padding-right: 56px;
+  }
 }
 /* ===============================
    72小时：概览条（A）
@@ -1012,9 +1027,12 @@ canvas{width:100% !important; height:100% !important}
   .logo{ width:56px; height:56px; border-radius:16px; }
   .titleRow{ flex-wrap: wrap; }
   .titleBlock h1{
-    font-size: 28px;
+    font-size: clamp(22px, 6vw, 28px);
     line-height: 1.06;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   /* 中文强制换到第二行，更干净 */
   .titleBlock h1 .cn{

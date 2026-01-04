@@ -191,9 +191,9 @@
     const tabs = Array.from(document.querySelectorAll(".tab"));
     tabs.forEach(t => {
       const id = t.dataset.tab || "";
-      if(id === "t1") setBilingualText(t, "1H");
-      else if(id === "t3") setBilingualText(t, "3H");
-      else if(id === "t72") setBilingualText(t, "72H");
+      if(id === "t1") setBilingualText(t, "1H Precision");
+      else if(id === "t3") setBilingualText(t, "3H Window");
+      else if(id === "t72") setBilingualText(t, "72H Outlook");
     });
 
     // Status + geo hint (EN only)
