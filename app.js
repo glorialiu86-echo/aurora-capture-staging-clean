@@ -102,6 +102,7 @@ const cacheGet = (k) => {
   }
 };
 
+
 const fmtAge = (ms) => {
   const m = Number(ms);
   if(!Number.isFinite(m)) return "";
@@ -111,6 +112,21 @@ const fmtAge = (ms) => {
   if(min < 60) return `${min}m`;
   const hr = Math.round(min/60);
   return `${hr}h`;
+};
+
+// --- Simplified status pill helpers ---
+const levelFromNote = (note, okFlag = true) => {
+  const s = String(note || "");
+  if(s.includes("❌")) return "bad";
+  if(s.includes("⚠️")) return "warn";
+  return okFlag ? "ok" : "bad";
+};
+
+const swPill = (rtStatus) => {
+  const st = String(rtStatus || "").toUpperCase();
+  if(st === "OK") return { level: "ok", text: "太阳风 ✅" };
+  if(st === "DEGRADED") return { level: "warn", text: "太阳风 ⚠️" };
+  return { level: "bad", text: "太阳风 ❌" };
 };
 
 const now = () => {
@@ -1169,10 +1185,10 @@ function fillCurrentLocation(){
 
       setStatusText("拉取数据中…");
       setStatusDots([
-        { level:"warn", text:"NOAA 拉取中" },
-        { level:"warn", text:"Kp 拉取中" },
-        { level:"warn", text:"云量拉取中" },
-        { level:"warn", text:"OVATION 拉取中" },
+        { level:"warn", text:"太阳风 …" },
+        { level:"warn", text:"KP …" },
+        { level:"warn", text:"云量 …" },
+        { level:"warn", text:"OVATION …" },
       ]);
 
       // Ensure placeholder layout before any run
@@ -1239,8 +1255,8 @@ function fillCurrentLocation(){
         });
 
         setStatusDots([
-          { level:"ok", text:"NOAA —" },
-          { level:"ok", text:"Kp —" },
+          { level:"ok", text:"太阳风 —" },
+          { level:"ok", text:"KP —" },
           { level:"ok", text:"云量 —" },
           { level:"ok", text:"OVATION —" },
         ]);
@@ -1264,13 +1280,10 @@ function fillCurrentLocation(){
       
       // 状态点：太阳风来源固定为镜像 + 新鲜度状态
       setStatusDots([
-        { level: rt.status === "OK" ? "ok" : (rt.status === "DEGRADED" ? "warn" : "bad"),
-        text: `太阳风：${rt.status}（mag ${Math.round(rt.imf.ageMin)}m / plasma ${Math.round(rt.solarWind.ageMin)}m）` +
-        (rt?.source?.primary ? ` · 来源:${rt.source.primary}` : "") +
-        ((rt.status !== "OK" && rt?.fmi?.ok && rt.fmi.prob != null) ? ` · FMI概率≈${Math.round(rt.fmi.prob)}%` : "")},
-        { level: kp.ok ? "ok" : "bad", text: kp.note || "Kp" },
-        { level: clouds.ok ? "ok" : "bad", text: clouds.note || "云量" },
-        { level: ova.ok ? "ok" : "bad", text: ova.note || "OVATION" },
+        swPill(rt?.status),
+        { level: levelFromNote(kp?.note, !!kp?.ok), text: kp?.note || "KP" },
+        { level: levelFromNote(clouds?.note, !!clouds?.ok), text: clouds?.note || "云量" },
+        { level: levelFromNote(ova?.note, !!ova?.ok), text: ova?.note || "OVATION" },
       ]);
       
       // 统一字段 → 旧模型 sw 结构（最小侵入：不改你后面模型）

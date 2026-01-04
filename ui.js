@@ -41,6 +41,14 @@
     return `${h} 小时前`;
   }
 
+  // ---------- status note (short, no details) ----------
+  function statusNote(name, state){
+    // state: "ok" | "warn" | "bad"
+    if(state === "ok") return `${name} ✅`;
+    if(state === "warn") return `${name} ⚠️`;
+    return `${name} ❌`;
+  }
+
   // ---------- time fmt ----------
   function now(){ return new Date(); }
   function fmtYMD(d){
@@ -383,13 +391,14 @@
       if(!t) throw new Error("empty");
       const j = JSON.parse(t);
       cacheSet("cache_kp", j);
-      return { ok:true, note:"✅ Kp 已更新", data:j };
+      return { ok:true, note: statusNote("KP", "ok"), data:j };
     }catch(e){
       const c = cacheGet("cache_kp");
       if(c?.value){
-        return { ok:true, note:`⚠️ Kp 拉取失败，使用缓存（${fmtAge(Date.now() - (c.ts || Date.now()))}）`, data:c.value };
+        // cache fallback: still usable, but warn
+        return { ok:true, note: statusNote("KP", "warn"), data:c.value };
       }
-      return { ok:false, note:"❌ Kp 拉取失败且无缓存", data:null };
+      return { ok:false, note: statusNote("KP", "bad"), data:null };
     }
   }
 
@@ -401,33 +410,32 @@
       if(!t) throw new Error("empty");
       const j = JSON.parse(t);
       cacheSet("cache_ovation", j);
-      return { ok:true, note:"✅ OVATION 已更新", data:j };
+      return { ok:true, note: statusNote("OVATION", "ok"), data:j };
     }catch(e){
       const c = cacheGet("cache_ovation");
       if(c?.value){
-        return { ok:true, note:`⚠️ OVATION 拉取失败，使用缓存（${fmtAge(Date.now() - (c.ts || Date.now()))}）`, data:c.value };
+        return { ok:true, note: statusNote("OVATION", "warn"), data:c.value };
       }
-      return { ok:false, note:"❌ OVATION 拉取失败且无缓存", data:null };
+      return { ok:false, note: statusNote("OVATION", "bad"), data:null };
     }
   }
 
   async function fetchClouds(lat, lon){
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${encodeURIComponent(lat)}&longitude=${encodeURIComponent(lon)}&hourly=cloudcover_low,cloudcover_mid,cloudcover_high&forecast_days=3&timezone=auto`;
+    const k = `cache_clouds_${Number(lat).toFixed(2)}_${Number(lon).toFixed(2)}`;
     try{
       const r = await fetch(url, { cache:"no-store" });
       const t = await r.text();
       if(!t) throw new Error("empty");
       const j = JSON.parse(t);
-      const k = `cache_clouds_${Number(lat).toFixed(2)}_${Number(lon).toFixed(2)}`;
       cacheSet(k, { lat, lon, j });
-      return { ok:true, note:"✅ 云量已更新", data:j };
+      return { ok:true, note: statusNote("云量", "ok"), data:j };
     }catch(e){
-      const k = `cache_clouds_${Number(lat).toFixed(2)}_${Number(lon).toFixed(2)}`;
       const c = cacheGet(k);
       if(c?.value?.j){
-        return { ok:true, note:`⚠️ 云量拉取失败，使用缓存（${fmtAge(Date.now() - (c.ts || Date.now()))}）`, data:c.value.j };
+        return { ok:true, note: statusNote("云量", "warn"), data:c.value.j };
       }
-      return { ok:false, note:"❌ 云量拉取失败且无缓存", data:null };
+      return { ok:false, note: statusNote("云量", "bad"), data:null };
     }
   }
 

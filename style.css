@@ -87,12 +87,22 @@ body{
   gap:14px;
 }
 
-/* Header right area: language toggle (subtle, non-intrusive) */
+/* Header right area: 工具介绍 + language toggle */
 .headRight{
   display:flex;
   align-items:center;
   justify-content:flex-end;
+  gap: 10px;
   flex: 0 0 auto;
+}
+
+/* Header help button: compact in header */
+.headRight .btnHelp{
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  white-space: nowrap;
 }
 
 /* Single language toggle pill (shows EN or CN) */
@@ -176,25 +186,32 @@ body{
 }
 
 /* Logo 图片适配：放 assets/logo.png 后，用 <img> 填充即可 */
-.logo img{
+.logo img,
+.logoImg{
   width:100%;
   height:100%;
   display:block;
   object-fit:contain;
 }
-.titleBlock h1{
+
+/* Brand title (supports old .titleBlock h1 and new .brandTitle) */
+.titleBlock h1,
+.brandTitle{
   margin:0;
   font-size: 26px;
   letter-spacing:.2px;
   line-height: 1.1;
   display:flex;
   gap:10px;
-  align-items:center;
+  align-items:baseline;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.cn{color:var(--muted)}
+
+.brandTitle .brandEn{ color: var(--txt); }
+.cn, .brandCn{ color: var(--muted); }
+
 .titleRow{display:flex; gap:10px; align-items:center}
 .ver{
   font-size:12px;
@@ -231,6 +248,34 @@ body{
   font-size: 12px;
   margin: 2px 0 8px;
 }
+
+/* Lat/Lon: label + input inline (hooked by .fieldInline) */
+.fieldInline{
+  display:flex;
+  align-items:center;
+  gap: 10px;
+}
+
+.fieldInline .label{
+  display:block;
+  margin: 0;
+  flex: 0 0 132px;
+  width: 132px;
+  font-size: 12px;
+}
+
+.fieldInline input{
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+@media (max-width: 520px){
+  .fieldInline .label{
+    flex-basis: 116px;
+    width: 116px;
+  }
+}
+
 input{
   width:100%;
   height:44px;
@@ -335,14 +380,29 @@ input::placeholder{color:rgba(255,255,255,.35)}
 
 .statusRow{
   margin-top: 10px;
-  justify-content:space-between;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
 }
-.statusDots{
+
+.statusLabel{
+  color: var(--muted2);
+  font-size: 12px;
+  letter-spacing: .2px;
+  flex: 0 0 auto;
+}
+
+/* Pills container (supports old .statusDots and new .statusPills) */
+.statusDots,
+.statusPills{
   display:flex;
   gap:8px;
   flex-wrap:wrap;
-  min-width: 0; /* allow children to shrink */
+  min-width: 0;
+  flex: 1 1 auto;
 }
+
 .dot{
   display:flex;
   align-items:center;
@@ -364,8 +424,16 @@ input::placeholder{color:rgba(255,255,255,.35)}
 
 /* Mobile: let each dot take a full row so text doesn't squeeze */
 @media (max-width: 520px){
+  /* Mobile: pills compact; long explanation hidden */
   .dot{
-    flex: 1 1 100%;
+    flex: 0 0 auto;
+    padding: 5px 9px;
+    font-size: 12px;
+    max-width: 100px; /* JS简化后会更短，这里先兜底避免撑高 */
+  }
+
+  .statusText{
+    display: none;
   }
 }
 .dot.ok{color:rgba(43,209,126,.95); border-color: rgba(43,209,126,.22)}
@@ -784,8 +852,9 @@ canvas{width:100% !important; height:100% !important}
   .headRight{
     width: 100%;
     display: flex;
-    justify-content: flex-end;
-    margin-top: 6px;
+    justify-content: space-between; /* 工具介绍在左，CN/EN在右 */
+    align-items: center;
+    margin-top: 8px;
   }
 }
 /* ===============================
@@ -1106,18 +1175,20 @@ canvas{width:100% !important; height:100% !important}
   .brand{ align-items: center; }
   .logo{ width:56px; height:56px; border-radius:16px; }
   .titleRow{ flex-wrap: wrap; }
-  .titleBlock h1{
-    font-size: clamp(22px, 6vw, 28px);
+  .titleBlock h1,
+  .brandTitle{
+    font-size: clamp(20px, 5.6vw, 28px);
     line-height: 1.06;
     flex-wrap: nowrap;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  /* 中文强制换到第二行，更干净 */
-  .titleBlock h1 .cn{
+
+  .titleBlock h1 .cn,
+  .brandTitle .brandCn{
     display: block;
-    font-size: 24px;
+    font-size: clamp(18px, 5.2vw, 24px);
     margin-top: 6px;
     opacity: .9;
   }
@@ -1322,15 +1393,17 @@ section > .fullWidthStack {
 
   .titleRow{ gap: 10px; }
 
-  .titleRow h1{
-    font-size: 30px;
+  .titleRow h1,
+  .brandTitle{
+    font-size: clamp(22px, 6.6vw, 30px);
     line-height: 1.05;
     margin: 0;
   }
 
-  .titleRow h1 .cn{
+  .titleRow h1 .cn,
+  .brandTitle .brandCn{
     display: block;
-    font-size: 25px;
+    font-size: clamp(18px, 5.8vw, 25px);
     margin-top: 6px;
     opacity: .9;
   }
