@@ -54,3 +54,34 @@
 
 ## Round 2.1 — dots 收敛说明
 - status dots item 结构统一为 `{ level, labelKey, iconKey }`，已移除旧的 text 路径。
+
+## Round 3 — model 输出 Key 化
+
+### 本轮变更
+- `model.js`：`labelByScore5` 结论输出改为 `STATUS_C5..C1`（保留 `t` 字段但值为 key，并新增 `statusKey` 字段便于后续渲染层接入）。
+- `model.js`：`state3h` 的 `state/hint` 输出改为 `T3_BURST_STATE_* / T3_BURST_HINT_*` key。
+- `model.js`：`explainUnobservable` 的 `primary/primaryText` 改为 `REASON_*` key（不改原因判定逻辑）。
+- `app.js`：仅新增一次 console.log（`[key-debug]`）透传打印 statusKey/reasonKey/state3hKey/hint3hKey；未改渲染逻辑。
+
+### 验证步骤
+1) 点击 Run Forecast 生成一次。
+2) 预期：控制台出现 `[key-debug]`，包含 `STATUS_*` / `REASON_*` / `T3_BURST_STATE_*` / `T3_BURST_HINT_*`。
+3) 预期：页面可运行，无新增报错（外部数据链路错误不在本轮处理范围）。
+
+### 声明
+- 未修改任何算法/阈值/分支逻辑，仅替换输出字符串为 key。
+- 未推进到 Round 4（未删除翻译映射、未大改渲染）。
+
+## Round 3 修正（R3-fix）
+
+### 原因
+- Round 3 产生的 key 被 UI 直接渲染，违反“R3 不改渲染逻辑、不暴露 key”的硬约束。
+
+### 修正点
+- UI 渲染回退为原有中文文案路径；key 仅用于 console.log 验证，不再进入可见文本。
+- 新增 key→中文的临时映射函数，仅用于恢复 UI 文案显示（不影响 model 的 key 输出）。
+
+### 结果
+- 页面不再出现 `STATUS_* / REASON_* / T3_BURST_*` 字样。
+- 控制台仍输出 `[key-debug]` 以验证 key 流。
+- Round 3 现已可封版。

@@ -82,11 +82,11 @@
   }
 
   function labelByScore5(s){
-    if(s >= 5) return { score:5, t:"强烈推荐", cls:"g" };
-    if(s >= 4) return { score:4, t:"值得出门", cls:"g" };
-    if(s >= 3) return { score:3, t:"可蹲守", cls:"b" };
-    if(s >= 2) return { score:2, t:"低概率", cls:"y" };
-    return { score:1, t:"不可观测", cls:"r" };
+    if(s >= 5) return { score:5, t:"STATUS_C5", statusKey:"STATUS_C5", cls:"g" };
+    if(s >= 4) return { score:4, t:"STATUS_C4", statusKey:"STATUS_C4", cls:"g" };
+    if(s >= 3) return { score:3, t:"STATUS_C3", statusKey:"STATUS_C3", cls:"b" };
+    if(s >= 2) return { score:2, t:"STATUS_C2", statusKey:"STATUS_C2", cls:"y" };
+    return { score:1, t:"STATUS_C1", statusKey:"STATUS_C1", cls:"r" };
   }
 
   // 太阳风 → 0~10 内部基准
@@ -245,10 +245,10 @@
     const bg    = (v >= 420 && bt >= 6.0);
     const dense = (n >= 2.0);
 
-    if(trig && bg) return { state:"爆发进行中", hint:"离子触发更明确。", score:8.0 };
-    if(bg && (dense || trig)) return { state:"爆发概率上升", hint:"系统更容易发生，但未到持续触发。", score:6.4 };
-    if(bg) return { state:"爆发后衰落期", hint:"刚有过波动，仍可能余震一会儿。", score:5.4 };
-    return { state:"静默", hint:"背景不足或触发不清晰。", score:3.0 };
+    if(trig && bg) return { state:"T3_BURST_STATE_ACTIVE", hint:"T3_BURST_HINT_ACTIVE", score:8.0 };
+    if(bg && (dense || trig)) return { state:"T3_BURST_STATE_RISING", hint:"T3_BURST_HINT_RISING", score:6.4 };
+    if(bg) return { state:"T3_BURST_STATE_DECAY", hint:"T3_BURST_HINT_DECAY", score:5.4 };
+    return { state:"T3_BURST_STATE_QUIET", hint:"T3_BURST_HINT_QUIET", score:3.0 };
   }
 
   // 72h 代理规则（你 app.js 里那两个）
@@ -272,9 +272,9 @@
   };
 
   const BlockerText = {
-    [ObservationBlocker.CLOUD_COVER]: "天空被云层遮挡，不利于观测",
-    [ObservationBlocker.BRIGHT_SKY]: "天色偏亮，微弱极光难以分辨",
-    [ObservationBlocker.LOW_AURORA_CONTRAST]: "能量注入弱，难以形成有效极光",
+    [ObservationBlocker.CLOUD_COVER]: "REASON_CLOUD_COVER_BLOCKS",
+    [ObservationBlocker.BRIGHT_SKY]: "REASON_SKY_TOO_BRIGHT_WEAK_AURORA_HARD_TO_SEE",
+    [ObservationBlocker.LOW_AURORA_CONTRAST]: "REASON_ENERGY_INPUT_TOO_WEAK",
   };
 
   // 优先级（最终只输出一个原因）：云 > 天色偏亮 > 对比度不足
@@ -337,10 +337,12 @@
       primary = ObservationBlocker.BRIGHT_SKY;
     }
 
+    const primaryKey = BlockerText[primary];
+
     return {
-      primary,
+      primary: primaryKey,
       secondary: null,
-      primaryText: BlockerText[primary],
+      primaryText: primaryKey,
       secondaryText: null,
     };
   }

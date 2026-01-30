@@ -478,6 +478,16 @@ function translateConclusionTextIfEN(cnPhrase){
   return map[cn] || cn || "Not Observable";
 }
 
+function conclusionTextFromLabelObj(obj){
+  const t = String(obj?.t || "");
+  if(t === "STATUS_C5") return "强烈推荐";
+  if(t === "STATUS_C4") return "值得出门";
+  if(t === "STATUS_C3") return "可蹲守";
+  if(t === "STATUS_C2") return "低概率";
+  if(t === "STATUS_C1") return "不可观测";
+  return t || "不可观测";
+}
+
 // ===============================
 // Language: dynamic text translation (EN only; CN remains unchanged)
 // ===============================
@@ -542,6 +552,33 @@ function translateReasonIfEN(cnText){
 
   // Default: keep CN (better than wrong EN)
   return cn;
+}
+
+function reasonTextFromKey(key){
+  const k = String(key || "");
+  if(k === "REASON_CLOUD_COVER_BLOCKS") return "天空被云层遮挡，不利于观测";
+  if(k === "REASON_SKY_TOO_BRIGHT_WEAK_AURORA_HARD_TO_SEE") return "天色偏亮，微弱极光难以分辨";
+  if(k === "REASON_ENERGY_INPUT_TOO_WEAK") return "能量注入弱，难以形成有效极光";
+  if(k === "REASON_MLAT_TOO_LOW_STOP") return "磁纬过低，已停止生成";
+  return "";
+}
+
+function burstStateTextFromKey(key){
+  const k = String(key || "");
+  if(k === "T3_BURST_STATE_ACTIVE") return "爆发进行中";
+  if(k === "T3_BURST_STATE_RISING") return "爆发概率上升";
+  if(k === "T3_BURST_STATE_DECAY") return "爆发后衰落期";
+  if(k === "T3_BURST_STATE_QUIET") return "静默";
+  return "—";
+}
+
+function burstHintTextFromKey(key){
+  const k = String(key || "");
+  if(k === "T3_BURST_HINT_ACTIVE") return "离子触发更明确。";
+  if(k === "T3_BURST_HINT_RISING") return "系统更容易发生，但未到持续触发。";
+  if(k === "T3_BURST_HINT_DECAY") return "刚有过波动，仍可能余震一会儿。";
+  if(k === "T3_BURST_HINT_QUIET") return "背景不足或触发不清晰。";
+  return "—";
 }
 
 function primaryPrefixIfEN(){
@@ -1665,7 +1702,7 @@ function fillCurrentLocation(){
       const heroObj = window.Model.labelByScore5(heroScore);
       // 1小时标题：整句跟随 C 值颜色（用 inline + !important 防止被 CSS 覆盖）
       const heroAllowPlus = (heroScore >= 2 && heroScore <= 4);
-      const heroLabelText = translateConclusionTextIfEN(heroObj.t);
+      const heroLabelText = translateConclusionTextIfEN(conclusionTextFromLabelObj(heroObj));
       const withPlus = !!(trendPlus?.on && heroAllowPlus);
       renderHeroLabel($("oneHeroLabel"), heroLabelText, cColor(heroObj.score), withPlus);
       // OVATION meta (time + age)
@@ -1691,6 +1728,7 @@ function fillCurrentLocation(){
       
       // ----- 观测限制解释（C=1/2/3 时显示；hardBlock 也必须给出原因，避免空白）-----
       let blockerText = "";
+      let reasonKeyDebug = "";
       try{
         if(heroScore <= 3 && heroGate){
           let primary = "";
@@ -1698,6 +1736,7 @@ function fillCurrentLocation(){
           // hardBlock：统一口径（不再区分太阳/月亮）
           if(heroGate.hardBlock){
             primary = "天色偏亮，微弱极光难以分辨";
+            reasonKeyDebug = "REASON_SKY_TOO_BRIGHT_WEAK_AURORA_HARD_TO_SEE";
           }else if(typeof window.Model?.explainUnobservable === "function"){
             // 云量：三层云取最大值（不向用户区分高/中/低云）
             let cloudMax = null;
@@ -1722,15 +1761,17 @@ function fillCurrentLocation(){
             }catch(_){ moonFrac = null; }
 
             const ex = window.Model.explainUnobservable({ cloudMax, moonAltDeg, moonFrac, sunAltDeg });
-            primary = ex?.primaryText ? String(ex.primaryText) : "";
-
-            // 兜底：如果解释为空，也统一为“天色偏亮…”
-            if(!primary.trim()) primary = "天色偏亮，微弱极光难以分辨";
+            const reasonKey = ex?.primary ? String(ex.primary) : "";
+            primary = reasonTextFromKey(reasonKey) || "天色偏亮，微弱极光难以分辨";
+            reasonKeyDebug = reasonKey || "REASON_SKY_TOO_BRIGHT_WEAK_AURORA_HARD_TO_SEE";
           }
 
           blockerText = primaryPrefixIfEN() + (translateReasonIfEN(primary) || "—");
         }
-      }catch(e){ blockerText = ""; }
+      }catch(e){
+        blockerText = "";
+        reasonKeyDebug = "";
+      }
 
       safeText($("oneHeroMeta"), actionNote1h(heroScore, heroGate));
       renderBlockerExplain($("oneBlockers"), heroScore, blockerText || "");
@@ -1746,6 +1787,13 @@ function fillCurrentLocation(){
           s3Burst = window.Model.state3h(sw);
         }
       }catch(_){ s3Burst = null; }
+
+      console.log("[key-debug]", {
+        statusKey: heroObj?.statusKey || heroObj?.t || "",
+        reasonKey: reasonKeyDebug || "",
+        state3hKey: s3Burst?.state || "",
+        hint3hKey: s3Burst?.hint || ""
+      });
 
       // 送达模型（保留：作为背景信息）
       const del = window.Model.deliverModel(sw);
@@ -1850,7 +1898,7 @@ function fillCurrentLocation(){
         // 主要影响因素：只在低分（<=2）时展示一个；hardBlock 也给出统一原因
         let factorText = "";
         if(score5 <= 2 && gate.hardBlock){
-          factorText = "天色偏亮，微弱极光难以分辨";
+          factorText = "REASON_SKY_TOO_BRIGHT_WEAK_AURORA_HARD_TO_SEE";
         }else if(score5 <= 2 && typeof window.Model?.explainUnobservable === "function"){
           const sunAltDeg  = getSunAltDeg(mid, lat, lon);
           const moonAltDeg = moonAlt;
@@ -1864,7 +1912,7 @@ function fillCurrentLocation(){
           }catch(_){ moonFrac = null; }
 
           const ex = window.Model.explainUnobservable({ cloudMax, moonAltDeg, moonFrac, sunAltDeg });
-          factorText = ex?.primaryText ? String(ex.primaryText) : "";
+          factorText = ex?.primary ? String(ex.primary) : "";
         }
 
         slots.push({ start, end, mid, score5, factorText, cloud3, gate });
@@ -1875,8 +1923,8 @@ function fillCurrentLocation(){
       const best = slots.filter(s => s.score5 === maxScore);
 
       // 3h burst model: show only the state (big) + one-line hint (small)
-      const burstStateCN = (s3Burst && s3Burst.state) ? String(s3Burst.state) : "—";
-      const burstHintCN  = (s3Burst && s3Burst.hint)  ? String(s3Burst.hint)  : "—";
+      const burstStateCN = burstStateTextFromKey(s3Burst?.state);
+      const burstHintCN  = burstHintTextFromKey(s3Burst?.hint);
 
       // big word (静默/爆发)
       safeText($("threeState"), burstStateCN);
@@ -1894,12 +1942,12 @@ function fillCurrentLocation(){
 
         const timeText = `${fmtHM(s.start)}–${fmtHM(s.end)}`;
         safeText($("threeSlot" + i + "Time"), timeText);
-        safeText($("threeSlot" + i + "Conclusion"), translateConclusionTextIfEN(lab.t));
+        safeText($("threeSlot" + i + "Conclusion"), translateConclusionTextIfEN(conclusionTextFromLabelObj(lab)));
         safeText($("threeSlot" + i + "Note"), actionNote1h(s.score5, s.gate));
 
         // reason line: show a single primary factor when we have it; otherwise keep it minimal
         const reason = (s.factorText && String(s.factorText).trim())
-          ? (primaryPrefixIfEN() + translateReasonIfEN(String(s.factorText)))
+          ? (primaryPrefixIfEN() + translateReasonIfEN(reasonTextFromKey(String(s.factorText))))
           : "";
         safeText($("threeSlot" + i + "Reason"), reason);
 
@@ -1986,7 +2034,7 @@ function fillCurrentLocation(){
 
         // 写入到三列卡片
         safeText($("day"+i+"Date"), key);
-        safeText($("day"+i+"Conclusion"), translateConclusionTextIfEN(lab.t));
+        safeText($("day"+i+"Conclusion"), translateConclusionTextIfEN(conclusionTextFromLabelObj(lab)));
         safeText($("day"+i+"Note"), actionNote72h(score5));
         renderDayBasis($("day"+i+"Basis"), basisLines);
 
