@@ -85,3 +85,76 @@
 - 页面不再出现 `STATUS_* / REASON_* / T3_BURST_*` 字样。
 - 控制台仍输出 `[key-debug]` 以验证 key 流。
 - Round 3 现已可封版。
+
+## Round 4 — R4-0 禁止映射基线搜索（仅记录）
+
+### translateConclusionTextIfEN
+- 命中 7 处
+- app.js：
+  - translateConclusionTextIfEN（函数定义）
+  - run() 内渲染：oneHeroLabel / threeSlot*Conclusion / day*Conclusion 等调用
+
+### translateReasonIfEN
+- 命中 4 处
+- app.js：
+  - translateReasonIfEN（函数定义）
+  - run() 内渲染：blockerText / threeSlot*Reason 等调用
+
+### translate
+- 命中 11 处
+- app.js：
+  - translateConclusionTextIfEN / translateReasonIfEN 相关定义与调用
+- style.css：
+  - transform: translateY(...)（非翻译映射，样式用途）
+
+### data-cn
+- 命中 0 处
+
+### data-en
+- 命中 0 处
+
+### mapCN / mapEN
+- 命中 0 处
+
+### trans toggle
+- 命中 0 处
+
+### safeHTML(
+- 命中 3 处
+- app.js：
+  - safeHTML wrapper 定义
+  - 注释中的 safeHTML 调用（被注释掉）
+- ui.js：
+  - safeHTML 函数定义
+
+### innerHTML
+- 命中 7 处
+- ui.js：
+  - about/footer 注入（UI_ABOUT_BODY / UI_FOOTER_BLOCK）
+- app.js / REVIEW.md / KEY_DRAFT.md：
+  - 文档/注释中提及（非执行路径）
+
+### textContent = (h == null ? "" : String(h))
+- 命中 2 处
+- app.js：safeHTML fallback
+- ui.js：safeHTML 实现
+
+### primaryPrefixIfEN
+- 命中 4 处
+- app.js：
+  - primaryPrefixIfEN（函数定义）
+  - run() 内 blockerText / threeSlot*Reason 调用
+
+## Round 4 — R4-2c 完成记录
+
+### 变更点
+- app.js → run() → 3h burst 渲染段落：
+  - threeState：使用 `s3Burst.state` 作为 key，优先 `tKey(key-like)`，否则 `maybeText(...)`。
+  - threeBurst：使用 `s3Burst.hint` 作为 key，优先 `tKey(key-like)`，否则 `maybeText(...)`。
+
+### 验收记录
+1) Run Forecast 后切 CN/EN：threeState 与 threeBurst 随语言切换变化。
+2) 控制台无新增报错（外部链路报错可忽略）。
+
+### Known edge-case / TODO（可选）
+- hard-stop 分支仍存在 threeState="静默" 的写死中文（未在本步修复）。
