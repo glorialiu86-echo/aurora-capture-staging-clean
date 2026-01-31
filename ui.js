@@ -49,10 +49,10 @@
   }
   function fmtAge(ms){
     const m = Math.floor(ms/60000);
-    if(m < 1) return "刚刚";
-    if(m < 60) return `${m} 分钟前`;
+    if(m < 1) return i18n.t("UI_TIMEAGO_JUST_NOW");
+    if(m < 60) return i18n.t("UI_TIMEAGO_MINUTES", { m });
     const h = Math.floor(m/60);
-    return `${h} 小时前`;
+    return i18n.t("UI_TIMEAGO_HOURS", { h });
   }
 
   // ---------- status note (short, no details) ----------

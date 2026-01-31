@@ -79,3 +79,15 @@
 ### 验证点
 1) 确认新增文件已纳入版本控制。
 2) 本轮无代码改动。
+
+## R4-2 A-1：定位精度 + 时间相对 + OVATION 失败 + 云量评分
+
+### 变更摘要
+- 定位精度后缀改为 STATUS_TEXT_GEO_ACCURACY_SUFFIX（避免 EN 下中文括号/文案）。
+- fmtAge 改为 UI_TIMEAGO_* 模板 key（刚刚/分钟前/小时前）。
+- OVATION “失败”改为 T1_OVATION_STATUS_FAIL。
+- 72h 云量评分优/中/差改为 UI_72H_CLOUD_GRADE_*。
+
+### 验证点
+1) 切 EN：不再出现“刚刚/分钟前/小时前/失败/优中差/精度约”等中文。
+2) Run Forecast：72h 云量评分与定位精度后缀显示英文，console 无 missing key。

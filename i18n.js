@@ -51,6 +51,10 @@
     STATUS_TEXT_GEO_FETCHING: { type: "text", zh: "📍 正在获取当前位置…", en: "📍 Getting current location..." },
     STATUS_TEXT_GEO_INVALID: { type: "text", zh: "⚠️ 定位返回无效坐标", en: "⚠️ Invalid coordinates returned" },
     STATUS_TEXT_GEO_SUCCESS: { type: "template", params: ["acc"], zh: "已获取当前位置 {acc}", en: "Location acquired {acc}" },
+    STATUS_TEXT_GEO_ACCURACY_SUFFIX: { type: "template", params: ["m"], zh: "（精度约 {m}m）", en: "(accuracy ≈ {m}m)" },
+    UI_TIMEAGO_JUST_NOW: { type: "text", zh: "刚刚", en: "Just now" },
+    UI_TIMEAGO_MINUTES: { type: "template", params: ["m"], zh: "{m} 分钟前", en: "{m} min ago" },
+    UI_TIMEAGO_HOURS: { type: "template", params: ["h"], zh: "{h} 小时前", en: "{h} hr ago" },
     STATUS_TEXT_GEO_PROCESS_ERR: { type: "text", zh: "⚠️ 定位处理异常", en: "⚠️ Location processing error" },
     STATUS_TEXT_GEO_UNAVAILABLE: { type: "text", zh: "⚠️ 无法获取定位", en: "⚠️ Unable to get location" },
     STATUS_TEXT_RUN_ERROR: { type: "text", zh: "生成失败：请打开控制台查看错误。", en: "Generation failed. Please check console." },
@@ -118,6 +122,7 @@
     T1_ACTION_LOW: { type: "text", zh: "当前时段不建议投入。", en: "Not recommended to invest effort now." },
     T1_ACTION_MID: { type: "text", zh: "可尝试短时观测。", en: "Try a short watch." },
     T1_ACTION_HIGH: { type: "text", zh: "值得出门尝试。", en: "Worth going out to try." },
+    T1_OVATION_STATUS_FAIL: { type: "text", zh: "失败", en: "Failed" },
 
     // --- T3 ---
     T3_STATE_TITLE: { type: "text", zh: "近期极光状态", en: "Recent Aurora State" },
@@ -182,6 +187,9 @@
     OUTLOOK72_ENERGY_BG_VALUE: { type: "template", params: ["kp"], zh: "Kp峰值≈{kp}", en: "Kp peak≈{kp}" },
     OUTLOOK72_DELIVERY_MODEL_VALUE: { type: "template", params: ["count"], zh: "{count}/3（Bt/速度/密度）", en: "{count}/3 (Bt/Speed/Density)" },
     OUTLOOK72_TRIGGER_MODEL_VALUE: { type: "template", params: ["p1a", "p1b"], zh: "高速风{p1a}/1 · 能量输入{p1b}/1", en: "Fast wind {p1a}/1 · Energy input {p1b}/1" },
+    UI_72H_CLOUD_GRADE_GOOD: { type: "text", zh: "优", en: "Good" },
+    UI_72H_CLOUD_GRADE_MED: { type: "text", zh: "中", en: "Medium" },
+    UI_72H_CLOUD_GRADE_BAD: { type: "text", zh: "差", en: "Poor" },
     OUTLOOK72_NIGHT_SHARE_VALUE: { type: "template", params: ["percent"], zh: "{percent}%", en: "{percent}%" },
     ALERT_GEO_TITLE_UNAVAILABLE: { type: "text", zh: "📍 无法获取定位", en: "📍 Unable to get location" },
     ALERT_GEO_BODY_NOT_SUPPORTED: { type: "text", zh: "当前浏览器不支持定位功能。\n\n你可以手动输入经纬度。", en: "Geolocation is not supported in this browser.\n\nYou can enter coordinates manually." },

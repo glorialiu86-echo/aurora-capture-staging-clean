@@ -571,11 +571,11 @@ function _cloudTotal(low, mid, high){
 
       // 云量评分（止血版）：按总云量分档
       function cloudGradeFromBest(best){
-        if(!best || !Number.isFinite(best.total)) return "—";
+        if(!best || !Number.isFinite(best.total)) return tKey("UI_PLACEHOLDER_DASH");
         const t = best.total;
-        if(t <= 30) return "优";
-        if(t <= 65) return "中";
-        return "差";
+        if(t <= 30) return tKey("UI_72H_CLOUD_GRADE_GOOD");
+        if(t <= 65) return tKey("UI_72H_CLOUD_GRADE_MED");
+        return tKey("UI_72H_CLOUD_GRADE_BAD");
       }
       
       // 未来3天（本地日历日）
@@ -745,7 +745,9 @@ function fillCurrentLocation(){
           if(latEl) latEl.value = latitude.toFixed(5);
           if(lonEl) lonEl.value = longitude.toFixed(5);
 
-          const accTxt = Number.isFinite(accuracy) ? `（精度约 ${Math.round(accuracy)}m）` : "";
+          const accTxt = Number.isFinite(accuracy)
+            ? tKey("STATUS_TEXT_GEO_ACCURACY_SUFFIX", { m: Math.round(accuracy) })
+            : "";
           setStatusText(tKey("STATUS_TEXT_GEO_SUCCESS", { acc: accTxt }));
           flashGeoButtonSuccess();
         }catch(e){
@@ -1617,7 +1619,7 @@ function fillCurrentLocation(){
             ovaTxt = "OK";
           }
         } else if (ova?.note) {
-          ovaTxt = "失败";
+          ovaTxt = tKey("T1_OVATION_STATUS_FAIL");
         }
       } catch (_) {
         ovaTxt = ova?.ok ? "OK" : "—";
