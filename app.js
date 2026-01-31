@@ -54,8 +54,8 @@ const SW_PLACEHOLDER_HTML = `
     <span><span class="swK">N</span> <span class="swV">—</span></span>
   </div>
   <div class="swAux">
-    <span class="swAuxItem">云 L/M/H —/—/—%</span>
-    <span class="swAuxItem">月角 —°</span>
+    <span class="swAuxItem">—/—/—%</span>
+    <span class="swAuxItem">—°</span>
   </div>
 `;
 // --- status / cache / format helpers (must work even when UI.js is not ready) ---
@@ -1633,7 +1633,7 @@ function fillCurrentLocation(){
 
           // hardBlock：统一口径（不再区分太阳/月亮）
           if(heroGate.hardBlock){
-            primary = "天色偏亮，微弱极光难以分辨";
+            primary = "REASON_SKY_TOO_BRIGHT_WEAK_AURORA_HARD_TO_SEE";
             reasonKey = "REASON_SKY_TOO_BRIGHT_WEAK_AURORA_HARD_TO_SEE";
             reasonKeyDebug = reasonKey;
           }else if(typeof window.Model?.explainUnobservable === "function"){
@@ -1661,7 +1661,7 @@ function fillCurrentLocation(){
 
             const ex = window.Model.explainUnobservable({ cloudMax, moonAltDeg, moonFrac, sunAltDeg });
             reasonKey = ex?.primary ? String(ex.primary) : "";
-            primary = reasonKey || "天色偏亮，微弱极光难以分辨";
+            primary = reasonKey || "REASON_SKY_TOO_BRIGHT_WEAK_AURORA_HARD_TO_SEE";
             reasonKeyDebug = reasonKey || "REASON_SKY_TOO_BRIGHT_WEAK_AURORA_HARD_TO_SEE";
           }
 
@@ -1846,7 +1846,10 @@ function fillCurrentLocation(){
       slots.forEach((s, i) => {
         const lab = (window.Model && typeof window.Model.labelByScore5 === "function")
           ? window.Model.labelByScore5(s.score5)
-          : { t: (s.score5 >= 4 ? "值得出门" : s.score5 === 3 ? "可蹲守" : s.score5 === 2 ? "低概率" : "不可观测"), score: s.score5 };
+          : {
+              statusKey: (s.score5 >= 4 ? "STATUS_C4" : s.score5 === 3 ? "STATUS_C3" : s.score5 === 2 ? "STATUS_C2" : "STATUS_C1"),
+              score: s.score5
+            };
 
         const timeText = `${fmtHM(s.start)}–${fmtHM(s.end)}`;
         safeText($("threeSlot" + i + "Time"), timeText);

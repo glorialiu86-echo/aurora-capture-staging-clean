@@ -59,3 +59,14 @@
 - 覆盖分支：不支持定位 / 无效坐标 / 处理异常 / 权限拒绝 / 不可用 / 超时 / 通用失败 / 异常
 - 新增 key：ALERT_GEO_*（title/body/note）
 - 结果：A1=0（用户手动核查）
+
+## R4-2 E cleanup：接线已有 key（消除硬编码中文）
+
+### 变更摘要
+- swAux placeholder 移除“云 L/M/H”“月角”硬编码，保留占位符。
+- 1h 主因 fallback 改为使用 REASON_SKY_TOO_BRIGHT_WEAK_AURORA_HARD_TO_SEE。
+- 3h fallback label 改用 STATUS_C*（不再硬编码“值得出门/可蹲守/低概率/不可观测”）。
+
+### 验证点
+1) Run Forecast 后：1h 主因与 3h 小时卡结论在 EN 下不出现中文（Unverified）。
+2) 切 CN/EN：swAux 占位不出现中文标签（Unverified）。
