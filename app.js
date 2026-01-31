@@ -727,7 +727,7 @@ function fillCurrentLocation(){
       return;
     }
 
-    setStatusText("📍 正在获取当前位置…");
+    setStatusText(tKey("STATUS_TEXT_GEO_FETCHING"));
 
     navigator.geolocation.getCurrentPosition(
       (pos) => {
@@ -738,7 +738,7 @@ function fillCurrentLocation(){
           const accuracy = coords ? Number(coords.accuracy) : NaN;
 
           if(!Number.isFinite(latitude) || !Number.isFinite(longitude)){
-            setStatusText("⚠️ 定位返回无效坐标");
+            setStatusText(tKey("STATUS_TEXT_GEO_INVALID"));
             openAlertOverlayFull(
               "📍 定位失败",
               "定位返回的经纬度无效，请重试或手动输入。",
@@ -754,11 +754,11 @@ function fillCurrentLocation(){
           if(lonEl) lonEl.value = longitude.toFixed(5);
 
           const accTxt = Number.isFinite(accuracy) ? `（精度约 ${Math.round(accuracy)}m）` : "";
-          setStatusText(`已获取当前位置 ${accTxt}`);
+          setStatusText(tKey("STATUS_TEXT_GEO_SUCCESS", { acc: accTxt }));
           flashGeoButtonSuccess();
         }catch(e){
           console.error("[AuroraCapture] geolocation success handler error:", e);
-          setStatusText("⚠️ 定位处理异常");
+          setStatusText(tKey("STATUS_TEXT_GEO_PROCESS_ERR"));
           openAlertOverlayFull(
             "📍 定位失败",
             "定位成功返回，但处理坐标时发生异常。请重试或手动输入。",
@@ -774,7 +774,7 @@ function fillCurrentLocation(){
         else if(code === 2) reason = "暂时无法获取定位（信号弱/系统未开启定位服务）。";
         else if(code === 3) reason = "获取定位超时，请稍后重试。";
 
-        setStatusText("⚠️ 无法获取定位");
+        setStatusText(tKey("STATUS_TEXT_GEO_UNAVAILABLE"));
         openAlertOverlayFull(
           "📍 无法获取定位",
           reason,
@@ -789,7 +789,7 @@ function fillCurrentLocation(){
     );
   }catch(e){
     console.error("[AuroraCapture] geolocation error:", e);
-    setStatusText("⚠️ 无法获取定位");
+    setStatusText(tKey("STATUS_TEXT_GEO_UNAVAILABLE"));
     openAlertOverlayFull(
       "📍 无法获取定位",
       "获取定位时发生异常，请重试或手动输入。",
@@ -1188,36 +1188,33 @@ function fillCurrentLocation(){
       const lon = Number($("lon")?.value);
 
       if(!Number.isFinite(lat) || !Number.isFinite(lon)){
-        setStatusText("请先输入有效经纬度。");
+        setStatusText(tKey("STATUS_TEXT_INPUT_INVALID"));
         openAlertOverlayFull(
-          "⚠️ 经纬度输入无效",
-          "请输入数字格式的纬度/经度。\n纬度范围：-90° ～ +90°；经度范围：-180° ～ +180°。",
-          "示例：纬度 53.47，经度 122.35"
+          tKey("ALERT_TITLE_INPUT_INVALID"),
+          tKey("ALERT_BODY_INPUT_INVALID"),
+          tKey("ALERT_FOOTER_INPUT_INVALID")
         );
         return;
       }
 
       // Range guard (hard)
       if(lat < -90 || lat > 90 || lon < -180 || lon > 180){
-        setStatusText("⚠️ 经纬度超出范围");
+        setStatusText(tKey("STATUS_TEXT_RANGE_INVALID"));
         openAlertOverlayFull(
-          "⚠️ 经纬度超出范围",
-          `你输入的是：Latitude ${lat}，Longitude ${lon}。\n` +
-            `允许范围：\n` +
-            `纬度（Latitude）：-90° ～ +90°\n` +
-            `经度（Longitude）：-180° ～ +180°` ,
-          "请修正后再点击生成。"
+          tKey("ALERT_TITLE_RANGE_INVALID"),
+          tKey("ALERT_BODY_RANGE_INVALID", { lat, lon }),
+          tKey("ALERT_FOOTER_RANGE_INVALID")
         );
         return;
       }
       if(!window.SunCalc){
-        setStatusText("关键计算模块未加载（SunCalc）。");
+        setStatusText(tKey("STATUS_TEXT_SUNCALC_MISSING"));
         return;
       }
 
       const baseDate = now();
 
-      setStatusText("拉取数据中…");
+      setStatusText(tKey("STATUS_TEXT_FETCHING"));
       setStatusDots([
         { level:"warn", labelKey:"DOT_LABEL_SW", iconKey:"DOT_ICON_WARN" },
         { level:"warn", labelKey:"DOT_LABEL_KP", iconKey:"DOT_ICON_WARN" },
@@ -1296,7 +1293,7 @@ function fillCurrentLocation(){
           { level:"ok", labelKey:"DOT_LABEL_CLOUDS", iconKey:"DOT_ICON_OK" },
           { level:"ok", labelKey:"DOT_LABEL_OVATION", iconKey:"DOT_ICON_OK" },
         ]);
-        setStatusText("⚠️ 磁纬过低：已停止生成。 ");
+        setStatusText(tKey("STATUS_TEXT_MLAT_STOP"));
         return;
       }
 
@@ -1493,7 +1490,7 @@ function fillCurrentLocation(){
       
       // OUTAGE 不硬停：提示 + 弱模式/降权
       if (rt.status === "OUTAGE") {
-        setStatusText("⚠️ 太阳风数据源长时间不可用：已进入弱模式（保守估算）");
+        setStatusText(tKey("STATUS_TEXT_SW_OUTAGE"));
       }
       // NOAA 缺字段：强提示弹窗 + 页面状态文案（甩锅 NOAA + 保守估算）
       const hasMissing = missingKeys.length > 0;
@@ -1502,7 +1499,7 @@ function fillCurrentLocation(){
         const missCN = missingKeys.map(k => (k==="v"?"V":k==="n"?"N":k==="bt"?"Bt":k==="bz"?"Bz":k)).join("、");
 
         // 数据可信度提醒：右侧可点击查看详情（不自动强弹）
-        setStatusText("⚠️ 数据可信度提醒");
+        setStatusText(tKey("STATUS_TEXT_DATA_CONFIDENCE"));
 
         const warnText = `NOAA 数据口径变动或部分数据缺失：${missCN}\n当前预测可信度较低，建议谨慎参考。`;
 
@@ -1513,7 +1510,7 @@ function fillCurrentLocation(){
           st.onclick = () => openAlertOverlayText(warnText);
         }
       }else{
-        setStatusText("已生成。");
+        setStatusText(tKey("STATUS_TEXT_DONE"));
         const st = document.getElementById("statusText");
         if(st){
           st.classList.remove("warn");
@@ -1942,7 +1939,7 @@ function fillCurrentLocation(){
 
     }catch(err){
       console.error("[AuroraCapture] run error:", err);
-      setStatusText("生成失败：请打开控制台查看错误。");
+      setStatusText(tKey("STATUS_TEXT_RUN_ERROR"));
     }
   }
 

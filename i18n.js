@@ -39,6 +39,20 @@
     // --- status row ---
     STATUS_ROW_ARIA: { type: "text", zh: "数据状态", en: "Data status" },
     STATUS_TEXT_WAITING: { type: "text", zh: "等待生成。", en: "Ready." },
+    STATUS_TEXT_FETCHING: { type: "text", zh: "拉取数据中…", en: "Fetching data..." },
+    STATUS_TEXT_DONE: { type: "text", zh: "已生成。", en: "Done." },
+    STATUS_TEXT_DATA_CONFIDENCE: { type: "text", zh: "⚠️ 数据可信度提醒", en: "⚠️ Data confidence notice" },
+    STATUS_TEXT_SW_OUTAGE: { type: "text", zh: "⚠️ 太阳风数据源长时间不可用：已进入弱模式（保守估算）", en: "⚠️ Solar wind data source long outage: weak mode (conservative)" },
+    STATUS_TEXT_MLAT_STOP: { type: "text", zh: "⚠️ 磁纬过低：已停止生成。", en: "⚠️ MLAT too low: generation stopped." },
+    STATUS_TEXT_SUNCALC_MISSING: { type: "text", zh: "关键计算模块未加载（SunCalc）。", en: "Required module missing (SunCalc)." },
+    STATUS_TEXT_INPUT_INVALID: { type: "text", zh: "请先输入有效经纬度。", en: "Please enter valid latitude/longitude." },
+    STATUS_TEXT_RANGE_INVALID: { type: "text", zh: "⚠️ 经纬度超出范围", en: "⚠️ Coordinates out of range" },
+    STATUS_TEXT_GEO_FETCHING: { type: "text", zh: "📍 正在获取当前位置…", en: "📍 Getting current location..." },
+    STATUS_TEXT_GEO_INVALID: { type: "text", zh: "⚠️ 定位返回无效坐标", en: "⚠️ Invalid coordinates returned" },
+    STATUS_TEXT_GEO_SUCCESS: { type: "template", params: ["acc"], zh: "已获取当前位置 {acc}", en: "Location acquired {acc}" },
+    STATUS_TEXT_GEO_PROCESS_ERR: { type: "text", zh: "⚠️ 定位处理异常", en: "⚠️ Location processing error" },
+    STATUS_TEXT_GEO_UNAVAILABLE: { type: "text", zh: "⚠️ 无法获取定位", en: "⚠️ Unable to get location" },
+    STATUS_TEXT_RUN_ERROR: { type: "text", zh: "生成失败：请打开控制台查看错误。", en: "Generation failed. Please check console." },
     UI_PREFIX_PRIMARY_FACTOR: { type: "text", zh: "主要影响因素：", en: "Primary factor: " },
 
     // --- status / reason keys (model outputs) ---
@@ -138,6 +152,12 @@
     ALERT_NOTE_DATA_CONF: { type: "text", zh: "不代表无法观测，仅表示模型输入存在不确定性。", en: "Not necessarily unobservable. Inputs may be uncertain." },
     ALERT_OK_BTN: { type: "text", zh: "知道了", en: "OK" },
     ALERT_CLOSE_ARIA: { type: "text", zh: "关闭", en: "Close" },
+    ALERT_TITLE_INPUT_INVALID: { type: "text", zh: "⚠️ 经纬度输入无效", en: "⚠️ Invalid coordinates" },
+    ALERT_BODY_INPUT_INVALID: { type: "text", zh: "请输入数字格式的纬度/经度。\n纬度范围：-90° ～ +90°；经度范围：-180° ～ +180°。", en: "Please enter numeric latitude/longitude.\nLatitude: -90° to +90°; Longitude: -180° to +180°." },
+    ALERT_FOOTER_INPUT_INVALID: { type: "text", zh: "示例：纬度 53.47，经度 122.35", en: "Example: 53.47, 122.35" },
+    ALERT_TITLE_RANGE_INVALID: { type: "text", zh: "⚠️ 经纬度超出范围", en: "⚠️ Coordinates out of range" },
+    ALERT_BODY_RANGE_INVALID: { type: "template", params: ["lat", "lon"], zh: "你输入的是：Latitude {lat}，Longitude {lon}。\n允许范围：\n纬度（Latitude）：-90° ～ +90°\n经度（Longitude）：-180° ～ +180°", en: "You entered: Latitude {lat}, Longitude {lon}.\nAllowed:\nLatitude: -90° to +90°\nLongitude: -180° to +180°" },
+    ALERT_FOOTER_RANGE_INVALID: { type: "text", zh: "请修正后再点击生成。", en: "Please correct and try again." },
 
     // --- frozen html blocks ---
     UI_ABOUT_BODY: {

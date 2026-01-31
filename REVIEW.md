@@ -172,3 +172,14 @@
 ### 验证点
 1) Run Forecast 后：页面无新增 JS 报错（外部链路报错可忽略）。
 2) 切 CN/EN：主结论/主因/3h state-hint 的文本可随语言变化。
+
+## Round 4 — R4-2 Step1 状态/校验提示 key 化
+
+### 变更摘要
+- setStatusText/run 过程状态提示改为 `tKey(STATUS_TEXT_*)`。
+- 输入校验提示（invalid/range）改为 `ALERT_*` key 驱动。
+- 新增状态/校验相关 uiTextKey（含模板参数）。
+
+### 验证点
+1) 页面打开不报错（Unverified：未在本地执行）。
+2) Run Forecast 一次不崩，切 CN/EN 后至少 1–2 条状态提示可切换（Unverified：未在本地执行）。
