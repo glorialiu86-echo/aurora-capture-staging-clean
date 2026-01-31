@@ -28,3 +28,12 @@
 
 ## Open questions / follow-ups
 - Unverified：本地未执行运行时 missing key 观测
+
+## R4-2 preflight A1 运行时核查
+- 动作序列：CN/EN 切换、打开/关闭工具介绍、Run Forecast、点击获取当前位置、关闭 alert（X/知道了）
+- 结果：A1=0（用户手动核查）
+
+## R4-2 preflight：定位 alerts key 化
+- 覆盖分支：不支持定位 / 无效坐标 / 处理异常 / 权限拒绝 / 不可用 / 超时 / 通用失败 / 异常
+- 新增 key：ALERT_GEO_*（title/body/note）
+- 结果：A1=0（用户手动核查）

@@ -720,9 +720,9 @@ function fillCurrentLocation(){
   try{
     if(!navigator.geolocation){
       openAlertOverlayFull(
-        "📍 无法获取定位",
-        "当前浏览器不支持定位功能。\n\n你可以手动输入经纬度。",
-        "可选方案：手动输入 / 奥维地图 / 在线经纬度查询工具。"
+        tKey("ALERT_GEO_TITLE_UNAVAILABLE"),
+        tKey("ALERT_GEO_BODY_NOT_SUPPORTED"),
+        tKey("ALERT_GEO_NOTE_NOT_SUPPORTED")
       );
       return;
     }
@@ -740,9 +740,9 @@ function fillCurrentLocation(){
           if(!Number.isFinite(latitude) || !Number.isFinite(longitude)){
             setStatusText(tKey("STATUS_TEXT_GEO_INVALID"));
             openAlertOverlayFull(
-              "📍 定位失败",
-              "定位返回的经纬度无效，请重试或手动输入。",
-              "可选方案：手动输入 / 奥维地图 / 在线经纬度查询工具。"
+              tKey("ALERT_GEO_TITLE_INVALID"),
+              tKey("ALERT_GEO_BODY_INVALID_COORDS"),
+              tKey("ALERT_GEO_NOTE_INVALID_COORDS")
             );
             return;
           }
@@ -760,26 +760,41 @@ function fillCurrentLocation(){
           console.error("[AuroraCapture] geolocation success handler error:", e);
           setStatusText(tKey("STATUS_TEXT_GEO_PROCESS_ERR"));
           openAlertOverlayFull(
-            "📍 定位失败",
-            "定位成功返回，但处理坐标时发生异常。请重试或手动输入。",
-            "可选方案：手动输入 / 奥维地图 / 在线经纬度查询工具。"
+            tKey("ALERT_GEO_TITLE_PROCESS_ERR"),
+            tKey("ALERT_GEO_BODY_PROCESS_ERR"),
+            tKey("ALERT_GEO_NOTE_PROCESS_ERR")
           );
         }
       },
       (err) => {
         const code = err && typeof err.code === "number" ? err.code : null;
 
-        let reason = "定位失败，请重试或手动输入。";
-        if(code === 1) reason = "你拒绝了定位授权。请在浏览器设置中允许定位后重试。";
-        else if(code === 2) reason = "暂时无法获取定位（信号弱/系统未开启定位服务）。";
-        else if(code === 3) reason = "获取定位超时，请稍后重试。";
-
         setStatusText(tKey("STATUS_TEXT_GEO_UNAVAILABLE"));
-        openAlertOverlayFull(
-          "📍 无法获取定位",
-          reason,
-          "可选方案：手动输入 / 奥维地图 / 在线经纬度查询工具。"
-        );
+        if(code === 1){
+          openAlertOverlayFull(
+            tKey("ALERT_GEO_TITLE_DENIED"),
+            tKey("ALERT_GEO_BODY_DENIED"),
+            tKey("ALERT_GEO_NOTE_DENIED")
+          );
+        }else if(code === 2){
+          openAlertOverlayFull(
+            tKey("ALERT_GEO_TITLE_UNAVAILABLE_CODE"),
+            tKey("ALERT_GEO_BODY_UNAVAILABLE_CODE"),
+            tKey("ALERT_GEO_NOTE_UNAVAILABLE_CODE")
+          );
+        }else if(code === 3){
+          openAlertOverlayFull(
+            tKey("ALERT_GEO_TITLE_TIMEOUT"),
+            tKey("ALERT_GEO_BODY_TIMEOUT"),
+            tKey("ALERT_GEO_NOTE_TIMEOUT")
+          );
+        }else{
+          openAlertOverlayFull(
+            tKey("ALERT_GEO_TITLE_GENERIC_ERR"),
+            tKey("ALERT_GEO_BODY_GENERIC_ERR"),
+            tKey("ALERT_GEO_NOTE_GENERIC_ERR")
+          );
+        }
       },
       {
         enableHighAccuracy: true,
@@ -791,9 +806,9 @@ function fillCurrentLocation(){
     console.error("[AuroraCapture] geolocation error:", e);
     setStatusText(tKey("STATUS_TEXT_GEO_UNAVAILABLE"));
     openAlertOverlayFull(
-      "📍 无法获取定位",
-      "获取定位时发生异常，请重试或手动输入。",
-      "可选方案：手动输入 / 奥维地图 / 在线经纬度查询工具。"
+      tKey("ALERT_GEO_TITLE_EXCEPTION"),
+      tKey("ALERT_GEO_BODY_EXCEPTION"),
+      tKey("ALERT_GEO_NOTE_EXCEPTION")
     );
   }
 }
