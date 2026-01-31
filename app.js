@@ -380,29 +380,21 @@ const initLangToggle = () => { if (uiReady() && typeof window.UI.initLangToggle 
      }
    }
 
-   function mlatGateText(absM){
-     return (
-       `当前位置磁纬约 ${absM.toFixed(1)}°（|MLAT|，近似值）。\n` +
-       `当 |MLAT| < ${MLAT_STRONG_WARN}° 时，极光可见性高度依赖极端磁暴与北向开阔地平线，不适合“常规出门拍”的决策。\n` +
-       `建议：尽量提高磁纬（靠近/进入极光椭圆边缘）再使用本工具。`
-     );
-   }
-
    function showMlatHardStop(mlat){
      const absM = Math.abs(mlat);
      openAlertOverlayFull(
-       "⚠️ 磁纬限制：不可观测",
-       `当前位置磁纬约 ${absM.toFixed(1)}°（|MLAT|，近似值）。\n当 |MLAT| < ${MLAT_HARD_STOP}° 时，极光几乎不可能到达你的可见范围。\n这是硬性地理限制：无论 Kp / Bz / 速度如何，都不建议投入等待与拍摄。`,
-       "这是硬性地理限制，不是数据缺失或模型不确定性。"
+       tKey("ALERT_MLAT_HARD_TITLE"),
+       tKey("ALERT_MLAT_HARD_BODY", { absM: absM.toFixed(1), threshold: MLAT_HARD_STOP }),
+       tKey("ALERT_MLAT_HARD_NOTE")
      );
    }
 
    function showMlatStrongWarn(mlat){
      const absM = Math.abs(mlat);
      openAlertOverlayFull(
-       "⚠️ 磁纬较低：仅极端事件才可能",
-       mlatGateText(absM),
-       "提示：你仍可继续生成，但请把它当作“极端磁暴边缘赌局”。"
+       tKey("ALERT_MLAT_WARN_TITLE"),
+       tKey("ALERT_MLAT_WARN_BODY", { absM: absM.toFixed(1), threshold: MLAT_STRONG_WARN }),
+       tKey("ALERT_MLAT_WARN_NOTE")
      );
    }
 
