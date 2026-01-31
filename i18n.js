@@ -9,16 +9,16 @@
     META_DESC: { type: "text", zh: "现在要不要出门追光？一键给出观测窗口", en: "Should you head out now? Get an instant observing window." },
     META_OG_DESC: { type: "text", zh: "现在要不要出门追光？一键给出观测窗口", en: "Should you head out now? Get an instant observing window." },
 
-    HDR_TITLE_BRAND: { type: "text", zh: "极光捕手", en: "Aurora Capture" },
+    HDR_TITLE_BRAND: { type: "text", zh: "Aurora Capture 极光捕手", en: "Aurora Capture 极光捕手" },
     HDR_LOGO_ALT: { type: "text", zh: "Aurora Capture logo", en: "Aurora Capture logo" },
     HDR_BTN_ABOUT: { type: "text", zh: "📖 工具介绍", en: "📖 Guide" },
-    HDR_BTN_ABOUT_ARIA: { type: "text", zh: "工具介绍", en: "How It Works" },
+    HDR_BTN_ABOUT_ARIA: { type: "text", zh: "📖 工具介绍", en: "📖 How It Works" },
     HDR_LANG_TOGGLE_ARIA: { type: "text", zh: "语言", en: "Language" },
     HDR_LANG_CN_LABEL: { type: "text", zh: "CN", en: "CN" },
     HDR_LANG_EN_LABEL: { type: "text", zh: "EN", en: "EN" },
 
     // --- about modal ---
-    ABOUT_MODAL_TITLE: { type: "text", zh: "📖 工具介绍", en: "📖 Guide" },
+    ABOUT_MODAL_TITLE: { type: "text", zh: "📖 工具介绍", en: "📖 How It Works" },
     ABOUT_CLOSE_ARIA: { type: "text", zh: "关闭", en: "Close" },
 
     // --- form ---
@@ -96,8 +96,8 @@
 
     // --- tabs ---
     TAB_T1_LABEL: { type: "text", zh: "现在", en: "Now" },
-    TAB_T3_LABEL: { type: "text", zh: "未来3小时", en: "Next 3 Hours" },
-    TAB_T72_LABEL: { type: "text", zh: "未来3天", en: "Next 3 Days" },
+    TAB_T3_LABEL: { type: "text", zh: "未来 3 小时", en: "Next 3 Hours" },
+    TAB_T72_LABEL: { type: "text", zh: "未来 3 天", en: "Next 3 Days" },
 
     // --- T1 ---
     T1_HERO_TITLE: { type: "text", zh: "当前建议（1小时内，10分钟粒度）", en: "Current Recommendation (updated every 10 minutes)" },
@@ -233,20 +233,20 @@
         </p>
 
         <p>
-          <b>【1 小时精准】</b><br>
+          <b>【现在】</b><br>
           以 10 分钟为粒度，即时回答：<br>
           「我现在要不要出门？要不要架机？」
         </p>
 
         <p>
-          <b>【3 小时预测】</b><br>
+          <b>【未来 3 小时】</b><br>
           呈现逐小时状态，选出最适合观测极光的一个小时。<br>
           同时告诉你当前极光是处在爆发中还是已衰落，并回答：<br>
           「接下来 3 小时值不值得守？」
         </p>
 
         <p>
-          <b>【72 小时范围】</b><br>
+          <b>【未来 3 天】</b><br>
           引入更多 CH 与 CME 日冕物质抛射的信息，以天为单位，预测极光爆发的可能性。<br>
           从更宏观的数据视角，回答：<br>
           「未来三天，哪一天最值得安排时间？」
