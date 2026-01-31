@@ -143,6 +143,7 @@
     T72_LEVEL_C3: { type: "text", zh: "【C值3】可蹲守：机会少，除非位置/条件极佳。", en: "C3 Worth Waiting: Limited opportunity unless your location/sky is excellent." },
     T72_LEVEL_C2: { type: "text", zh: "【C值2】低概率：综合偏弱，提前投入意义不大。", en: "C2 Low Chance: Overall weak. Early investment is not worth it." },
     T72_LEVEL_C1: { type: "text", zh: "【C值1】不可观测：不建议投入。", en: "C1 Not Observable: Not recommended to invest effort." },
+    UI_72H_NOT_OBSERVABLE_TITLE: { type: "text", zh: "不可观测", en: "Not Observable" },
     T72_ACTION_LOW: { type: "text", zh: "暂不建议为此规划行程。", en: "Not recommended to plan a trip for this yet." },
     T72_ACTION_MID: { type: "text", zh: "可提前关注，临近再决定。", en: "Keep an eye on it; decide closer to the date." },
     T72_ACTION_HIGH: { type: "text", zh: "值得提前规划行程。", en: "Worth planning ahead." },

@@ -183,3 +183,13 @@
 ### 验证点
 1) 页面打开不报错（Unverified：未在本地执行）。
 2) Run Forecast 一次不崩，切 CN/EN 后至少 1–2 条状态提示可切换（Unverified：未在本地执行）。
+
+## Round 4 — R4-2 补丁：72h「不可观测」标题 key 化
+
+### 变更摘要
+- 新增 `UI_72H_NOT_OBSERVABLE_TITLE`（zh/en）用于 72h 卡片标题。
+- 72h map5 的 score=1 标题改为 `tKey("UI_72H_NOT_OBSERVABLE_TITLE")`。
+
+### 验证点
+1) 切 CN/EN：72h 卡片标题随语言变化（Unverified：未在本地执行）。
+2) 控制台不再出现 `missing key: 不可观测`（Unverified：未在本地执行）。

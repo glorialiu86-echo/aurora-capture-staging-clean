@@ -1902,11 +1902,11 @@ function fillCurrentLocation(){
         score5 = clamp(score5, 1, 5);
 
         const map5 = {
-          5: { t: "强烈推荐", cls: "c5" },
-          4: { t: "值得出门", cls: "c4" },
-          3: { t: "可蹲守", cls: "c3" },
-          2: { t: "低概率", cls: "c2" },
-          1: { t: "不可观测", cls: "c1" },
+          5: { t: "STATUS_C5", cls: "c5" },
+          4: { t: "STATUS_C4", cls: "c4" },
+          3: { t: "STATUS_C3", cls: "c3" },
+          2: { t: "STATUS_C2", cls: "c2" },
+          1: { t: "UI_72H_NOT_OBSERVABLE_TITLE", cls: "c1" },
         };
         const lab = map5[score5];
 
