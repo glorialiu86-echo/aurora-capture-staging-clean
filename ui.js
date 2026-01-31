@@ -163,16 +163,10 @@
       opts.forEach(b => b.classList.toggle("active", (b.dataset.lang || "cn") === lang));
     }
 
-    // 2) Render brand title (preserve existing dual-span structure)
-    const brandText = i18n.t("HDR_TITLE_BRAND");
-    const enEl = document.querySelector(".brandTitle .brandEn");
-    const cnEl = document.querySelector(".brandTitle .brandCn");
-    if(lang === "en"){
-      if(enEl) enEl.textContent = brandText;
-      if(cnEl) cnEl.textContent = "";
-    }else{
-      if(enEl) enEl.textContent = "";
-      if(cnEl) cnEl.textContent = brandText;
+    // 2) Render brand title (single span; text only)
+    const brandMain = document.querySelector(".brandTitle .brandMain");
+    if(brandMain){
+      brandMain.textContent = i18n.t("HDR_TITLE_BRAND");
     }
 
     // 3) Static UI texts (data-i18n driven)
