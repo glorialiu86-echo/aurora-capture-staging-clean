@@ -1902,11 +1902,11 @@ function fillCurrentLocation(){
         score5 = clamp(score5, 1, 5);
 
         const map5 = {
-          5: { t: "STATUS_C5", cls: "c5" },
-          4: { t: "STATUS_C4", cls: "c4" },
-          3: { t: "STATUS_C3", cls: "c3" },
-          2: { t: "STATUS_C2", cls: "c2" },
-          1: { t: "STATUS_C1", cls: "c1" },
+          5: { t: "UI_72H_TITLE_C5", cls: "c5" },
+          4: { t: "UI_72H_TITLE_C4", cls: "c4" },
+          3: { t: "UI_72H_TITLE_C3", cls: "c3" },
+          2: { t: "UI_72H_TITLE_C2", cls: "c2" },
+          1: { t: "UI_72H_TITLE_C1", cls: "c1" },
         };
         const lab = map5[score5];
 
