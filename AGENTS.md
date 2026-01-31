@@ -40,38 +40,6 @@ the agent **MUST generate a `REVIEW.md` file** in the repo root.
 - 一旦该轮 commit+push 完成：下一轮改动必须**重新改写/覆盖** REVIEW.md（仍使用同一固定模板），不允许把上一次的 `Planned` / `Open questions` / 旧变更继续保留或追加。
 - 例外：如果 REVIEW.md 中存在“长期规范/词典/约束”（例如 FIXED_I18N_MAP canonical terms 这类不随版本变化的规范段落），允许保留，但必须明确标注为 `## Reference (Long-lived)` 并与本次变更摘要区块分隔。
 
-### 2.2 REVIEW.md Fixed Template (Do NOT alter)
-```md
-# Review Summary
-
-## What changed
-- Bullet list of concrete changes (3–7 lines max)
-
-## Files touched
-- Modified:
-- Added:
-- Deleted:
-
-## Behavior impact
-- What user-visible behavior changed
-- What explicitly did NOT change
-
-## Risk assessment
-- Possible failure modes
-- Performance / cost / quota impact
-- Deployment or environment risks
-
-## How to test
-1. Step-by-step manual test instructions
-2. Expected results
-
-## Rollback plan
-- How to revert safely (e.g. revert commit / switch branch)
-
-## Open questions / follow-ups
-- Anything uncertain, deferred, or intentionally skipped
-```
-
 ---
 
 ## 3. Before Coding (Mandatory)
@@ -108,10 +76,14 @@ Before writing **any code**, the agent must:
 
 ## 6.1 Versioning Rule (Mandatory)
 - 每次 **commit + push**（无论是否部署到 production），都必须同步更新项目版本号。
-- 当前版本号仅存在于 **index.html** 中，用于：
-  - 静态资源缓存控制（如 `?v=0319`）
-  - 页面底部展示用版本号文本（如 `v3.0.0319`）
-- 当前版本号格式为 **MMDD**（例如 0319）。
+- 当前版本号 **同时存在于以下两个位置，必须保持一致**：
+  1) **index.html**
+     - 用途：静态资源缓存控制（如 `?v=0320`）
+  2) **i18n.js → UI_FOOTER_BLOCK（zh / en）**
+     - 用途：页面底部展示用版本号文本（如 `v3.0.0320`）
+- **禁止只更新其中一处**；任何一次提交若出现版本号不一致，视为版本纪律违规。
+- 当前版本号格式为 **MMDD**（例如 `0320`）。
+- 该规则为**硬性约束**，需在 `REVIEW.md` 中作为每次提交的固定自检项记录。
 
 ### 升级规则
 - 每次 push 时，将 **index.html 中现有的版本号 `0319` 全部统一 +1**（例如 `0319 → 0320`）。

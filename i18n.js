@@ -58,7 +58,7 @@
     STATUS_TEXT_GEO_PROCESS_ERR: { type: "text", zh: "⚠️ 定位处理异常", en: "⚠️ Error: Positioning processing exception." },
     STATUS_TEXT_GEO_UNAVAILABLE: { type: "text", zh: "⚠️ 无法获取定位", en: "⚠️ Error: Location acquisition failed." },
     STATUS_TEXT_RUN_ERROR: { type: "text", zh: "⚠️ 生成失败：请打开控制台查看错误。", en: "⚠️ Error: Forecast failed. Check console for details." },
-    UI_PREFIX_PRIMARY_FACTOR: { type: "text", zh: "主要影响因素：", en: "Key Influencing Factors:  " },
+    UI_PREFIX_PRIMARY_FACTOR: { type: "text", zh: "主要影响因素：", en: "Key Influencing Factors: " },
 
     // --- status / reason keys (model outputs) ---
     STATUS_C5: { type: "text", zh: "强烈推荐", en: "Strongly Recommended" },
@@ -235,21 +235,21 @@
         <p>
           <b>【现在】</b><br>
           以 10 分钟为粒度，即时回答：<br>
-          「我现在要不要出门？要不要架机？」
+          “我现在要不要出门？要不要架机？“
         </p>
 
         <p>
           <b>【未来 3 小时】</b><br>
           呈现逐小时状态，选出最适合观测极光的一个小时。<br>
           同时告诉你当前极光是处在爆发中还是已衰落，并回答：<br>
-          「接下来 3 小时值不值得守？」
+          “接下来 3 小时值不值得守？“
         </p>
 
         <p>
           <b>【未来 3 天】</b><br>
           引入更多 CH 与 CME 日冕物质抛射的信息，以天为单位，预测极光爆发的可能性。<br>
           从更宏观的数据视角，回答：<br>
-          「未来三天，哪一天最值得安排时间？」
+          “未来 72 小时，哪一天最值得安排时间？“
         </p>
 
         <p class="aboutSectionTitle">
@@ -384,8 +384,8 @@
 
     UI_FOOTER_BLOCK: {
       type: "html",
-      zh: "佑酱已吐血更新到版本号：v3.0.0319 ； 备案许可证编号：沪ICP备2026001760号<br>数据源：NOAA SWPC（实时太阳风、OVATION nowcast、Kp 预报）与 Open-Meteo 云量预报。磁纬（MLAT）当前为估算（偶极近似）。",
-      en: "Version v3.0.0319 · ICP Filing No. 沪ICP备2026001760号<br>Data sources: NOAA SWPC (real-time solar wind, OVATION nowcast, Kp forecast) and Open-Meteo cloud forecast. MLAT is currently estimated (dipole approximation)."
+      zh: "佑酱已吐血更新到版本号：v3.0.0321 ； 备案许可证编号：沪ICP备2026001760号<br>数据源：NOAA SWPC（实时太阳风、OVATION nowcast、Kp 预报）与 Open-Meteo 云量预报。磁纬（MLAT）当前为估算（偶极近似）。",
+      en: "Version v3.0.0321 · ICP Filing No. 沪ICP备2026001760号<br>Data sources: NOAA SWPC (real-time solar wind, OVATION nowcast, Kp forecast) and Open-Meteo cloud forecast. MLAT is currently estimated (dipole approximation)."
     }
   };
 
