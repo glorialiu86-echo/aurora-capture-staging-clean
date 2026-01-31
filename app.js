@@ -1480,7 +1480,7 @@ function fillCurrentLocation(){
       if(clouds?.ok && clouds?.data){
         const cnow = cloudNow3layer(clouds.data, baseDate);
         if(cnow){
-          cloudLine = `云 L/M/H ${cnow.low}/${cnow.mid}/${cnow.high}%`;
+          cloudLine = tKey("T1_SW_CLOUD_LINE", { l: cnow.low, m: cnow.mid, h: cnow.high });
         }
       }
     }catch(_){ cloudLine = ""; }
@@ -1490,7 +1490,7 @@ function fillCurrentLocation(){
     try{
       const moonAlt = getMoonAltDeg(baseDate, lat, lon);
       if(Number.isFinite(moonAlt)){
-        moonLine = `月角 ${moonAlt.toFixed(1)}°`;
+        moonLine = tKey("T1_SW_MOON_LINE", { deg: moonAlt.toFixed(1) });
       }
     }catch(_){ moonLine = ""; }
 
@@ -1500,7 +1500,14 @@ function fillCurrentLocation(){
       const tsText = sw.time_tag ? fmtYMDHM(new Date(sw.time_tag)) : "—";
       safeText(
         $("swMeta"),
-        `更新时间：${tsText} ・ 新鲜度：mag ${Math.round(rt.imf.ageMin)}m / plasma ${Math.round(rt.solarWind.ageMin)}m${Number.isFinite(sw._plasmaBackfillAgeMin) ? ` ・ V/N回溯：${sw._plasmaBackfillAgeMin}m` : ""}`
+        tKey("T1_SW_META_TEMPLATE", {
+          tsText,
+          magAgeMin: Math.round(rt.imf.ageMin),
+          plasmaAgeMin: Math.round(rt.solarWind.ageMin),
+          backfillAgeMin: Number.isFinite(sw._plasmaBackfillAgeMin)
+            ? ` ・ V/N回溯：${sw._plasmaBackfillAgeMin}m`
+            : ""
+        })
       );
       
       // OUTAGE 不硬停：提示 + 弱模式/降权
@@ -1703,7 +1710,7 @@ function fillCurrentLocation(){
       safeText($("threeDeliver"), tKey("DELIVERY_RATIO_OK", { ok: del.count, total: 3 }));
       safeText(
         $("threeDeliverMeta"),
-        `Bt平台${del.okBt ? "✅" : "⚠️"} ・ 速度背景${del.okV ? "✅" : "⚠️"} ・ 密度结构${del.okN ? "✅" : "⚠️"}`
+        `${tKey("T3_DELIVER_BT_PLATEAU")}${del.okBt ? "✅" : "⚠️"} ・ ${tKey("T3_DELIVER_SPEED_BG")}${del.okV ? "✅" : "⚠️"} ・ ${tKey("T3_DELIVER_DENSITY_STRUCT")}${del.okN ? "✅" : "⚠️"}`
       );
 
       // 取某个时刻对应的“小时云量三层”，并返回 cloudMax（不区分高/中/低云展示）

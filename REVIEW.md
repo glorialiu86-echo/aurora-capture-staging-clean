@@ -29,6 +29,16 @@
 ## Open questions / follow-ups
 - Unverified：本地未执行运行时 missing key 观测
 
+## R4-2 preflight：Upstream 与 Delivery 文案 key 化
+
+### 变更摘要
+- Upstream Status：云量行、月角行、更新时间行改用 T1_SW_* 模板 key。
+- Delivery Model：Bt平台/速度背景/密度结构标签改用 T3_DELIVER_* key。
+
+### 验证点
+1) 切 EN：Upstream Status 三行不再出现中文（Unverified）。
+2) 切 EN：Delivery Model 行显示英文标签（Unverified）。
+
 ## R4-2 preflight：delivery/72h 中文行 key 化
 
 ### 变更摘要

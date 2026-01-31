@@ -122,6 +122,9 @@
     T3_STATE_TITLE: { type: "text", zh: "近期极光状态", en: "Recent Aurora State" },
     T3_STATE_NOTE: { type: "text", zh: "备注：爆发 ≠ 可观测，仍受云量与天光影响。", en: "Note: Burst ≠ Observable. Still affected by clouds and sky brightness." },
     T3_DELIVER_TITLE: { type: "text", zh: "太阳风送达能力综合模型", en: "Solar Wind Delivery Model" },
+    T3_DELIVER_BT_PLATEAU: { type: "text", zh: "Bt平台", en: "Bt plateau" },
+    T3_DELIVER_SPEED_BG: { type: "text", zh: "速度背景", en: "Speed background" },
+    T3_DELIVER_DENSITY_STRUCT: { type: "text", zh: "密度结构", en: "Density structure" },
 
     T3_LEVEL_TITLE: { type: "text", zh: "3小时结论分级（C值）", en: "3H Conclusion Levels (C-Index)" },
     T3_LEVEL_C5: { type: "text", zh: "【C值5】强烈推荐：投入回报高，建议立即行动。", en: "C5 Strongly Recommended: High payoff. Go now." },
