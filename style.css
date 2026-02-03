@@ -326,7 +326,7 @@ input{
 input::placeholder{color:rgba(255,255,255,.35)}
 
 .row{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
-.actions{margin-top:10px}
+.actions{margin-top:10px; width:100%}
 /* actions 行：按钮并列，提示独占下一行 */
 .actions .hint{flex: 0 0 100%;}
 .hint{color:var(--muted2); font-size:12px}
@@ -348,6 +348,8 @@ input::placeholder{color:rgba(255,255,255,.35)}
 .btn.primary:hover{filter:brightness(1.04)}
 /* actions：只保留两枚按钮（获取位置 / 生成预测），同高同重量 */
 .actions .btn{
+  flex: 1 1 0;
+  min-width: 0;
   font-size: 14px;
   height: 44px;
   padding: 0 16px;
@@ -1564,5 +1566,7 @@ section > .fullWidthStack {
 }
 
 #oneBlockers .blockerExplain{
+  display: block !important;
+  width: 100% !important;
   justify-content: flex-start !important;
 }

@@ -1,46 +1,44 @@
 #### 0. 本次变更一句话
-- 品牌标题统一为单一节点渲染并同步版本号到 0322
+- 三处 UI 对齐：按钮等宽、因素条满宽、72h 去大面板
 
 #### 1. 改动范围（Scope）
 **1.1 改了什么**
-- index.html：品牌标题改为单一 .brandMain 节点，并将所有 ?v=0321 更新为 ?v=0322
-- ui.js：applyLang 改为统一写入 .brandMain 文案（移除 brandEn/brandCn 逻辑）
-- i18n.js：UI_FOOTER_BLOCK 版本号更新为 v3.0.0322
-- REVIEW.md：记录本次 UI 结构与版本号更新
+- index.html：`#t72` 中移除 `card hero` 外层与两行文案，仅保留 `#daysTri` 三张日卡并提升为 pane 直接子元素。
+- style.css：` .actions` 增加 `width:100%`，并给 `.actions .btn` 增加 `flex:1 1 0; min-width:0;`，实现同排等宽撑满。
+- style.css：`#oneBlockers .blockerExplain` 增加 `display:block; width:100%;`（带 `!important`），确保主要影响因素条横向铺满。
+- REVIEW.md：重写为本轮改动说明。
 
 **1.2 明确没改什么（Hard No）**
-- 预测流程与模型逻辑
-- i18n 体系与 key 集（未新增/未改 key）
-- 其他 header/footer/about 结构与交互
-- CSS 与样式规则
+- 预测计算/评分/状态判断逻辑
+- 数据结构、i18n key、API 与模型流程
+- 其他页面模块的文案与交互行为
+- 依赖与构建配置
 
 #### 2. 行为变化（Behavior Change）
-- Before：标题用 brandEn/brandCn 双节点切换
-  After：标题改为单一 .brandMain 节点切换文案
-- Before：CN/EN 标题可能有颜色与紧凑度差异
-  After：CN/EN 标题视觉一致（沿用现有 EN 表现）
-- Before：静态资源缓存参数为 ?v=0321
-  After：静态资源缓存参数为 ?v=0322
-- Before：页脚显示 v3.0.0321
-  After：页脚显示 v3.0.0322
+- Before：顶部两个按钮宽度由内容决定，可能不等宽。
+  After：按钮在同一行时等宽并横向撑满容器，窄屏允许换行。
+- Before：「主要影响因素」背景条在部分场景呈现短条感。
+  After：背景条固定横向占满 `#oneBlockers` 可用宽度。
+- Before：「未来3天」有一层 `card hero` 大面板，并显示标题与说明文案。
+  After：仅保留三张日卡容器 `#daysTri`，无大底板、无标题/说明两行文字。
 
 #### 3. 风险与护栏（Risk & Guardrails）
-- 风险：.brandMain 未渲染导致标题为空
-  触发条件：DOM 未更新或选择器不匹配
-  护栏：index.html 已替换为单一节点，applyLang 仅写入该节点
-- 风险：HDR_TITLE_BRAND 被 data-i18n 自动渲染覆盖
-  触发条件：renderNode 未跳过 HDR_TITLE_BRAND
-  护栏：保留了 if(key === "HDR_TITLE_BRAND") return;（Unverified）
-- 风险：版本号更新不一致
-  触发条件：index.html 与 UI_FOOTER_BLOCK 版本号不同步
-  护栏：本次两处统一为 0322，并在验收清单固定核对
+- 风险：按钮文本过长时视觉拥挤。
+  触发条件：极窄屏或语言切换后文本更长。
+  护栏：保留 `flex-wrap: wrap`，并使用 `min-width:0` 防止挤压溢出。
+- 风险：`#oneBlockers` 未来若改为复杂布局，满宽规则可能影响内部排版。
+  触发条件：后续在该容器内增加多列结构。
+  护栏：本次仅对 `.blockerExplain` 设满宽，不改颜色/圆角体系（Unverified）。
+- 风险：移除 `#t72` 外层 `card hero` 后，页签顶部间距感受变化。
+  触发条件：不同设备对 `#t72` 现有 padding 呈现不同。
+  护栏：未新增间距样式，保持现有 `#t72` 顶部规则不变。
 
 #### 4. 验收清单（Acceptance Checklist）
-- [ ] 切换 CN/EN，标题文案正确切换且颜色/字重/紧凑度一致（Pass/Fail）
-- [ ] DOM 中仅存在一个 .brandMain，且不存在 brandEn/brandCn（Pass/Fail）
-- [ ] Console 无 i18n missing key 与 JS error（Pass/Fail）
-- [ ] 资源 URL 参数为 ?v=0322，页脚显示 v3.0.0322（Pass/Fail）
-- [ ] 其他 header/footer/about 行为未变化（Not in scope）
+- [ ] 桌面宽屏：顶部两按钮同一行、等宽、左右贴齐卡片内边距且中间有 gap（Pass/Fail）
+- [ ] 窄屏：顶部两按钮可自动换行且无挤压溢出（Pass/Fail）
+- [ ] 1小时卡片中「主要影响因素」背景条横向铺满内容区（Pass/Fail）
+- [ ] 切换到「未来3天」仅见三张日卡，无大底板且无标题/说明文案（Pass/Fail）
+- [ ] 版本号联动更新（index.html + i18n.js）本轮未执行 commit/push，Not in scope
 
 #### 5. 回滚方案（Rollback）
-- 回滚本次提交（revert 对应 commit）
+- 回滚本次提交（revert 对应 commit）即可恢复原 UI 结构与样式。
