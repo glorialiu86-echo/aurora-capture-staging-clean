@@ -1557,14 +1557,16 @@ section > .fullWidthStack {
 #t72{
   padding-top: 10px;
 }
-/* 1小时：主要影响因素贴左，不要贴右 */
+/* 1小时：主要影响因素顶格（占满宽度），不要被 heroSide 的 max-width 限制 */
 .heroTopRow{
   display: block !important;
   margin-top: 10px !important;
 }
 
+/* oneBlockers 是 heroSide（之前有 max-width:420px），需要强制解除上限 */
 #oneBlockers{
   width: 100% !important;
+  max-width: none !important;
   margin-left: 0 !important;
   text-align: left !important;
 }
@@ -1572,5 +1574,4 @@ section > .fullWidthStack {
 #oneBlockers .blockerExplain{
   display: block !important;
   width: 100% !important;
-  justify-content: flex-start !important;
 }
