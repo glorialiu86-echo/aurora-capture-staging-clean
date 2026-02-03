@@ -40,3 +40,42 @@
 
 #### 5. 回滚方案（Rollback）
 - 执行 `git revert <本次提交SHA>` 回滚本轮版本号升级。
+
+---
+
+## Step 1（A1 前台行为基线）
+
+#### 0. 本次变更一句话
+- 新增前台行为基线断言文档。
+
+#### 1. 改动范围（Scope）
+**1.1 改了什么**
+- FRONTEND_BEHAVIOR_BASELINE.md：新增 10 条用户感知断言与手动验收步骤。
+- REVIEW.md：追加 Step 1 变更与验收记录。
+
+**1.2 明确没改什么（Hard No）**
+- app.js/ui.js/model.js 业务逻辑
+- 任何请求地址、阈值、状态映射、文案
+- 页面结构、样式、交互流程
+
+#### 2. 行为变化（Behavior Change）
+- Before：无 A1 基线断言文档。
+  After：新增可手动验收的行为断言清单。
+- Before：前台运行行为由代码隐式定义。
+  After：前台运行行为被显式记录为可核对基线。
+
+#### 3. 风险与护栏（Risk & Guardrails）
+- 风险：文档描述与真实行为偏差。
+  触发条件：后续代码变更但未同步更新基线文档。
+  护栏：将断言写为可手动复现步骤，便于回归核对。
+- 风险：误触发代码改动。
+  触发条件：在编写文档时修改 JS/HTML 文件。
+  护栏：本步仅新增 markdown 与 REVIEW 追加，无代码改动。
+
+#### 4. 验收清单（Acceptance Checklist）
+- [ ] `FRONTEND_BEHAVIOR_BASELINE.md` 存在并包含 5-10 条用户感知断言（Pass/Fail）
+- [ ] 文档覆盖 Run 触发、状态映射、kp/ovation/clouds fallback、solar wind LKG、顶层 realtime 调用（Pass/Fail）
+- [ ] 本步无 JS/HTML/CSS 逻辑改动（Pass/Fail）
+
+#### 5. 回滚方案（Rollback）
+- 执行 `git revert <Step 1 提交SHA>` 回滚本步文档变更。
