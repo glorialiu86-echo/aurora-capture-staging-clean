@@ -128,3 +128,49 @@
 
 #### 5. 回滚方案（Rollback）
 - 执行 `git revert <Step 2 提交SHA>` 回滚本步收口改动。
+
+---
+
+## Step 3（D2 requestPolicy 统一请求策略）
+
+#### 0. 本次变更一句话
+- 新增 requestPolicy 并让 DataProvider 请求统一经过该封装。
+
+#### 1. 改动范围（Scope）
+**1.1 改了什么**
+- requestPolicy.js：新增统一请求层，收敛 timeout/no-store/错误结构。
+- dataProvider.js：改为调用 `RequestPolicy`，新增 `requestJsonDetailed/requestTextDetailed`。
+- index.html：新增 `requestPolicy.js` 脚本引用（位于 `dataProvider.js` 之前）。
+- REVIEW.md：追加 Step 3 记录。
+
+**1.2 明确没改什么（Hard No）**
+- 数据源 URL 与 provider 选择
+- 业务层成功/失败判定与 fallback 顺序
+- statusKey 与前台文案
+- Run 与顶层 realtime 触发方式
+
+#### 2. 行为变化（Behavior Change）
+- Before：DataProvider 内部各请求各自处理错误。
+  After：DataProvider 统一通过 RequestPolicy 获取标准请求结果结构。
+- Before：请求层错误字段非统一。
+  After：请求层统一输出 `{ok,httpStatus,errorType,errorMsg,latencyMs,fetchedAt}`。
+
+#### 3. 风险与护栏（Risk & Guardrails）
+- 风险：标准化封装改变业务 catch 分支触发条件。
+  触发条件：原先抛错路径被吞掉。
+  护栏：DataProvider 仍在失败时 `throw Error(...)`，保持上层逻辑不变。
+- 风险：script 顺序错误导致 RequestPolicy 未就绪。
+  触发条件：`dataProvider.js` 先于 `requestPolicy.js` 执行。
+  护栏：index.html 中先引入 `requestPolicy.js`，再引入 `dataProvider.js`。
+- 风险：请求层返回结构缺字段（Unverified）。
+  触发条件：异常分支遗漏字段。
+  护栏：RequestPolicy 成功/失败分支均返回固定字段集。
+
+#### 4. 验收清单（Acceptance Checklist）
+- [ ] `requestPolicy.js` 存在并提供统一结构 `{ok,httpStatus,errorType,errorMsg,latencyMs,fetchedAt}`（Pass/Fail）
+- [ ] DataProvider 内部请求全部通过 RequestPolicy（Pass/Fail）
+- [ ] ui/app 前台可见行为与 Step 1 基线一致（Pass/Fail）
+- [ ] `app.js` 与 `ui.js` 仍无直接 fetch 调用（Pass/Fail）
+
+#### 5. 回滚方案（Rollback）
+- 执行 `git revert <Step 3 提交SHA>` 回滚本步请求策略改动。

@@ -26,30 +26,52 @@
     return null;
   };
 
-  async function requestJson(url, timeoutMs = 12000) {
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), timeoutMs);
-    try {
-      const res = await fetch(url, { cache: "no-store", signal: ctrl.signal });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return await res.json();
-    } finally {
-      clearTimeout(timer);
+  const _policy = () => window.RequestPolicy;
+
+  async function requestJsonDetailed(url, timeoutMs = 12000) {
+    const p = _policy();
+    if (!p || typeof p.requestJson !== "function") {
+      return {
+        ok: false,
+        httpStatus: null,
+        errorType: "policy_unavailable",
+        errorMsg: "RequestPolicy.requestJson unavailable",
+        latencyMs: 0,
+        fetchedAt: new Date().toISOString(),
+        data: null
+      };
     }
+    return p.requestJson(url, { timeoutMs, cache: "no-store" });
+  }
+
+  async function requestTextDetailed(url, timeoutMs = 12000) {
+    const p = _policy();
+    if (!p || typeof p.requestText !== "function") {
+      return {
+        ok: false,
+        httpStatus: null,
+        errorType: "policy_unavailable",
+        errorMsg: "RequestPolicy.requestText unavailable",
+        latencyMs: 0,
+        fetchedAt: new Date().toISOString(),
+        data: null
+      };
+    }
+    return p.requestText(url, { timeoutMs, cache: "no-store" });
+  }
+
+  async function requestJson(url, timeoutMs = 12000) {
+    const res = await requestJsonDetailed(url, timeoutMs);
+    if (!res.ok) throw new Error(res.errorMsg || "request failed");
+    return res.data;
   }
 
   async function requestTextJson(url, timeoutMs = 12000) {
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), timeoutMs);
-    try {
-      const r = await fetch(url, { cache: "no-store", signal: ctrl.signal });
-      if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      const t = await r.text();
-      if (!t) throw new Error("empty");
-      return JSON.parse(t);
-    } finally {
-      clearTimeout(timer);
-    }
+    const res = await requestTextDetailed(url, timeoutMs);
+    if (!res.ok) throw new Error(res.errorMsg || "request failed");
+    const t = res.data;
+    if (!t) throw new Error("empty");
+    return JSON.parse(t);
   }
 
   function _latestValidFromNoaaTable(noaaTable, want) {
@@ -296,6 +318,8 @@
 
   window.DataProvider = {
     requestJson,
+    requestJsonDetailed,
+    requestTextDetailed,
     fetchRtsw1m,
     fetchMirrorProducts,
     fetchFmiHint,
