@@ -1070,6 +1070,10 @@ canvas{width:100% !important; height:100% !important}
   margin-top: 14px;
 }
 
+#t72 .daysTri{
+  margin-bottom: 14px;
+}
+
 /* 3小时页签：两个顶层卡片之间留出间距（避免移动端模块“粘连”） */
 #t3 > .card + .card{
   margin-top: 14px;
