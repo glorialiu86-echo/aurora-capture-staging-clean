@@ -174,3 +174,55 @@
 
 #### 5. 回滚方案（Rollback）
 - 执行 `git revert <Step 3 提交SHA>` 回滚本步请求策略改动。
+
+---
+
+## Step 4（隐藏审计页 + 台账）
+
+#### 0. 本次变更一句话
+- 新增 `?audit=1` 隐藏审计页与请求台账只读展示。
+
+#### 1. 改动范围（Scope）
+**1.1 改了什么**
+- dataProvider.js：在请求层与数据层记录“最近一次状态台账”（无论成功失败）；落地到 `window.__AC_AUDIT__` + `sessionStorage`。
+- audit.js：新增审计页脚本（`?audit=1` 才启用），口令 `yoyoyoyo` 解锁后只读渲染台账。
+- index.html：仅新增 audit 容器与 `audit.js` 脚本引用；不改现有前台结构/元素 id/文案。
+- REVIEW.md：追加 Step 4 记录。
+
+**1.2 明确没改什么（Hard No）**
+- 普通访问路径（无 `?audit=1`）的 UI 结构与交互
+- 数据源、阈值、statusKey、fallback 顺序
+- Run 行为与页面加载顶层 realtime 行为
+- 审计页默认自动拉取行为（保持无）
+
+#### 2. 行为变化（Behavior Change）
+- Before：无审计页与统一台账。
+  After：`?audit=1` 下可输入口令查看“最近一次状态台账”。
+- Before：请求层错误信息分散于运行日志/局部对象。
+  After：请求尝试统一落入台账（`fetchedAt/latency/httpStatus/errorType/errorMsg`），并附 `dataTime/dataAge/sample`。
+- Before：无手动台账刷新入口。
+  After：审计页提供“Refresh Ledger”按钮（仅重渲染台账，不触发请求）。
+
+#### 3. 风险与护栏（Risk & Guardrails）
+- 风险：审计页误触发新请求。
+  触发条件：audit 渲染阶段调用 DataProvider 拉取函数。
+  护栏：audit.js 仅读取 `getAuditSnapshot/sessionStorage`，不调用任何 fetch API。
+- 风险：普通用户看到审计 UI。
+  触发条件：默认页面直接展示 audit 容器。
+  护栏：容器默认 `display:none`，仅当 URL 含 `?audit=1` 才显示。
+- 风险：口令绕过或持久化过长。
+  触发条件：把解锁状态写入 localStorage。
+  护栏：仅写入 `sessionStorage`，关闭标签页即失效。
+- 风险：台账字段不完整（Unverified）。
+  触发条件：异常分支漏记 dataKey 字段。
+  护栏：各 dataKey 在成功/失败分支均调用 `_setLedger(...)`。
+
+#### 4. 验收清单（Acceptance Checklist）
+- [ ] 无 `?audit=1` 访问时，页面视觉与行为与基线一致（Pass/Fail）
+- [ ] `?audit=1` 未解锁时仅显示口令输入，不展示台账内容（Pass/Fail）
+- [ ] 输入 `yoyoyoyo` 后展示台账；关闭标签页后需重新解锁（Pass/Fail）
+- [ ] 打开审计页不会新增请求（除现有页面加载顶层 realtime）(Pass/Fail)
+- [ ] Solar wind 异常场景下，台账可见 `fetchedAt/dataTime/dataAge/errorType/errorMsg`（Pass/Fail)
+
+#### 5. 回滚方案（Rollback）
+- 执行 `git revert <Step 4 提交SHA>` 回滚本步审计改动。

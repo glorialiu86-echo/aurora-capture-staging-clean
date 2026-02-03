@@ -295,6 +295,46 @@
     </section>
 
     <footer class="foot" id="footerBlock"></footer>
+
+    <section id="auditContainer" style="display:none; margin-top:16px;" aria-hidden="true">
+      <div class="card">
+        <div class="k">Audit Ledger</div>
+        <div id="auditLock">
+          <div style="margin-top:8px;">请输入审计口令：</div>
+          <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;">
+            <input id="auditPass" type="password" placeholder="password" />
+            <button id="auditUnlockBtn" type="button" class="btn secondary">Unlock</button>
+          </div>
+          <div id="auditErr" style="margin-top:8px; color:#ff9a9a; font-size:12px;"></div>
+        </div>
+        <div id="auditBoard" style="display:none; margin-top:8px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
+            <div>Last update: <span id="auditUpdatedAt">—</span></div>
+            <button id="auditRefreshBtn" type="button" class="btn secondary">Refresh Ledger</button>
+          </div>
+          <div style="margin-top:10px; overflow:auto;">
+            <table style="width:100%; border-collapse:collapse; font-size:12px;">
+              <thead>
+                <tr>
+                  <th style="text-align:left; border-bottom:1px solid rgba(255,255,255,.2); padding:6px;">key</th>
+                  <th style="text-align:left; border-bottom:1px solid rgba(255,255,255,.2); padding:6px;">provider</th>
+                  <th style="text-align:left; border-bottom:1px solid rgba(255,255,255,.2); padding:6px;">url</th>
+                  <th style="text-align:left; border-bottom:1px solid rgba(255,255,255,.2); padding:6px;">status</th>
+                  <th style="text-align:left; border-bottom:1px solid rgba(255,255,255,.2); padding:6px;">ok</th>
+                  <th style="text-align:left; border-bottom:1px solid rgba(255,255,255,.2); padding:6px;">fetchedAt</th>
+                  <th style="text-align:left; border-bottom:1px solid rgba(255,255,255,.2); padding:6px;">dataTime</th>
+                  <th style="text-align:left; border-bottom:1px solid rgba(255,255,255,.2); padding:6px;">http</th>
+                  <th style="text-align:left; border-bottom:1px solid rgba(255,255,255,.2); padding:6px;">latency</th>
+                  <th style="text-align:left; border-bottom:1px solid rgba(255,255,255,.2); padding:6px;">error</th>
+                  <th style="text-align:left; border-bottom:1px solid rgba(255,255,255,.2); padding:6px;">sample</th>
+                </tr>
+              </thead>
+              <tbody id="auditTbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
   </div>
 
   <!-- 背景介绍 Modal -->
@@ -345,6 +385,7 @@
   <script defer src="./ui.js?v=0323"></script>
   <script defer src="./model.js?v=0323"></script>
   <script defer src="./app.js?v=0323"></script>
+  <script defer src="./audit.js?v=0323"></script>
   
 </body>
 </html>

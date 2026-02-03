@@ -1,11 +1,12 @@
-// Unified data access entry (Step 2).
-// This file only centralizes request entrances; business decisions remain in callers.
+// Unified data access entry (Step 2/3/4).
+// This file centralizes request entrances and keeps an internal request ledger for audit view.
 (() => {
   const NOAA_RTSW_MAG_1M = "https://services.swpc.noaa.gov/json/rtsw/rtsw_mag_1m.json";
   const NOAA_RTSW_WIND_1M = "https://services.swpc.noaa.gov/json/rtsw/rtsw_wind_1m.json";
   const FMI_R_INDEX = "https://space.fmi.fi/MIRACLE/RWC/data/r_index_latest_en.json";
   const NOAA_KP_FORECAST = "https://services.swpc.noaa.gov/products/noaa-planetary-k-index-forecast.json";
   const NOAA_OVATION = "https://services.swpc.noaa.gov/json/ovation_aurora_latest.json";
+  const AUDIT_STORAGE_KEY = "ac_audit_ledger_v1";
 
   const _num = (x) => {
     const v = Number(x);
@@ -27,6 +28,52 @@
   };
 
   const _policy = () => window.RequestPolicy;
+
+  function _ensureAudit() {
+    if (!window.__AC_AUDIT__ || typeof window.__AC_AUDIT__ !== "object") {
+      window.__AC_AUDIT__ = { ledger: {}, updatedAt: null };
+      try {
+        const raw = sessionStorage.getItem(AUDIT_STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && typeof parsed === "object") {
+            window.__AC_AUDIT__.ledger = parsed.ledger && typeof parsed.ledger === "object" ? parsed.ledger : {};
+            window.__AC_AUDIT__.updatedAt = parsed.updatedAt || null;
+          }
+        }
+      } catch (_) {
+        // keep in-memory fallback only
+      }
+    }
+    return window.__AC_AUDIT__;
+  }
+
+  function _saveAudit() {
+    const audit = _ensureAudit();
+    try {
+      sessionStorage.setItem(AUDIT_STORAGE_KEY, JSON.stringify({ ledger: audit.ledger, updatedAt: audit.updatedAt }));
+    } catch (_) {
+      // ignore storage failures
+    }
+  }
+
+  function _setLedger(key, patch) {
+    const audit = _ensureAudit();
+    audit.ledger[key] = {
+      ...(audit.ledger[key] || {}),
+      ...patch,
+      key,
+      updatedAt: new Date().toISOString()
+    };
+    audit.updatedAt = audit.ledger[key].updatedAt;
+    _saveAudit();
+  }
+
+  function _computeAgeMin(iso) {
+    const t = Date.parse(iso || "");
+    if (!Number.isFinite(t)) return null;
+    return Math.round((Date.now() - t) / 60000);
+  }
 
   async function requestJsonDetailed(url, timeoutMs = 12000) {
     const p = _policy();
@@ -64,14 +111,6 @@
     const res = await requestJsonDetailed(url, timeoutMs);
     if (!res.ok) throw new Error(res.errorMsg || "request failed");
     return res.data;
-  }
-
-  async function requestTextJson(url, timeoutMs = 12000) {
-    const res = await requestTextDetailed(url, timeoutMs);
-    if (!res.ok) throw new Error(res.errorMsg || "request failed");
-    const t = res.data;
-    if (!t) throw new Error("empty");
-    return JSON.parse(t);
   }
 
   function _latestValidFromNoaaTable(noaaTable, want) {
@@ -139,11 +178,20 @@
       solarWind: { speed_km_s: null, density_cm3: null, ts: null, ageMin: Infinity }
     };
 
+    let magReq = null;
+    let windReq = null;
+
     try {
-      const [magJ, windJ] = await Promise.all([
-        requestJson(NOAA_RTSW_MAG_1M, 12000),
-        requestJson(NOAA_RTSW_WIND_1M, 12000)
+      [magReq, windReq] = await Promise.all([
+        requestJsonDetailed(NOAA_RTSW_MAG_1M, 12000),
+        requestJsonDetailed(NOAA_RTSW_WIND_1M, 12000)
       ]);
+
+      if (!magReq.ok) throw new Error(magReq.errorMsg || "mag request failed");
+      if (!windReq.ok) throw new Error(windReq.errorMsg || "wind request failed");
+
+      const magJ = magReq.data;
+      const windJ = windReq.data;
 
       const pickLast = (j) => {
         if (Array.isArray(j) && j.length) return j[j.length - 1];
@@ -222,6 +270,29 @@
     } catch (e) {
       out.err = String(e?.message || e);
       return out;
+    } finally {
+      const reqOk = !!(magReq?.ok && windReq?.ok);
+      _setLedger("solar_wind_rtsw", {
+        provider: "rtsw-1m",
+        url: `${NOAA_RTSW_MAG_1M} | ${NOAA_RTSW_WIND_1M}`,
+        fetchedAt: windReq?.fetchedAt || magReq?.fetchedAt || new Date().toISOString(),
+        fetchAgeMin: 0,
+        dataTime: out?.imf?.ts || out?.solarWind?.ts || null,
+        dataAgeMin: Number.isFinite(Number(out?.imf?.ageMin)) ? Math.round(Number(out.imf.ageMin)) : (Number.isFinite(Number(out?.solarWind?.ageMin)) ? Math.round(Number(out.solarWind.ageMin)) : null),
+        ok: reqOk,
+        status: reqOk ? "ok" : "bad",
+        reason: out?.err || "",
+        errorType: (!reqOk && (magReq?.errorType || windReq?.errorType)) ? (magReq?.errorType || windReq?.errorType) : "",
+        errorMsg: (!reqOk && (magReq?.errorMsg || windReq?.errorMsg)) ? (magReq?.errorMsg || windReq?.errorMsg) : "",
+        latencyMs: (Number(magReq?.latencyMs) || 0) + (Number(windReq?.latencyMs) || 0),
+        httpStatus: reqOk ? `${magReq?.httpStatus}/${windReq?.httpStatus}` : (magReq?.httpStatus || windReq?.httpStatus || null),
+        sample: {
+          v: out?.solarWind?.speed_km_s ?? null,
+          n: out?.solarWind?.density_cm3 ?? null,
+          bt: out?.imf?.bt_nT ?? null,
+          bz: out?.imf?.bz_gsm_nT ?? null
+        }
+      });
     }
   }
 
@@ -233,11 +304,21 @@
       solarWind: { speed_km_s: null, density_cm3: null, ts: null, ageMin: Infinity }
     };
 
+    const magUrl = `./noaa/mag.json?t=${Date.now()}`;
+    const plasmaUrl = `./noaa/plasma.json?t=${Date.now()}`;
+    let magReq = null;
+    let plasmaReq = null;
+
     try {
-      const [magWrap, plasmaWrap] = await Promise.all([
-        requestJson(`./noaa/mag.json?t=${Date.now()}`, 12000),
-        requestJson(`./noaa/plasma.json?t=${Date.now()}`, 12000)
+      [magReq, plasmaReq] = await Promise.all([
+        requestJsonDetailed(magUrl, 12000),
+        requestJsonDetailed(plasmaUrl, 12000)
       ]);
+      if (!magReq.ok) throw new Error(magReq.errorMsg || "mag mirror failed");
+      if (!plasmaReq.ok) throw new Error(plasmaReq.errorMsg || "plasma mirror failed");
+
+      const magWrap = magReq.data;
+      const plasmaWrap = plasmaReq.data;
 
       const magLast = _latestValidFromNoaaTable(magWrap?.noaa, {
         time: "time_tag",
@@ -277,43 +358,376 @@
     } catch (e) {
       out.err = String(e?.message || e);
       return out;
+    } finally {
+      const reqOk = !!(magReq?.ok && plasmaReq?.ok);
+      _setLedger("solar_wind_mirror", {
+        provider: "mirror-products",
+        url: `${magUrl} | ${plasmaUrl}`,
+        fetchedAt: plasmaReq?.fetchedAt || magReq?.fetchedAt || new Date().toISOString(),
+        fetchAgeMin: 0,
+        dataTime: out?.imf?.ts || out?.solarWind?.ts || null,
+        dataAgeMin: Number.isFinite(Number(out?.imf?.ageMin)) ? Math.round(Number(out.imf.ageMin)) : (Number.isFinite(Number(out?.solarWind?.ageMin)) ? Math.round(Number(out.solarWind.ageMin)) : null),
+        ok: reqOk,
+        status: reqOk ? "ok" : "bad",
+        reason: out?.err || "",
+        errorType: (!reqOk && (magReq?.errorType || plasmaReq?.errorType)) ? (magReq?.errorType || plasmaReq?.errorType) : "",
+        errorMsg: (!reqOk && (magReq?.errorMsg || plasmaReq?.errorMsg)) ? (magReq?.errorMsg || plasmaReq?.errorMsg) : "",
+        latencyMs: (Number(magReq?.latencyMs) || 0) + (Number(plasmaReq?.latencyMs) || 0),
+        httpStatus: reqOk ? `${magReq?.httpStatus}/${plasmaReq?.httpStatus}` : (magReq?.httpStatus || plasmaReq?.httpStatus || null),
+        sample: {
+          v: out?.solarWind?.speed_km_s ?? null,
+          n: out?.solarWind?.density_cm3 ?? null,
+          bt: out?.imf?.bt_nT ?? null,
+          bz: out?.imf?.bz_gsm_nT ?? null
+        }
+      });
     }
   }
 
   async function fetchFmiHint() {
-    try {
-      const j = await requestJson(FMI_R_INDEX, 12000);
-      let bestProb = null;
-      const scan = (node) => {
-        if (!node) return;
-        if (Array.isArray(node)) return node.forEach(scan);
-        if (typeof node !== "object") return;
-        const prob = _num(_pick(node, ["probability", "prob", "AuroraProbability", "aurora_probability"]));
-        if (prob != null) bestProb = (bestProb == null ? prob : Math.max(bestProb, prob));
-        for (const v of Object.values(node)) scan(v);
-      };
-      scan(j);
-      return { ok: bestProb != null, prob: bestProb };
-    } catch (e) {
-      return { ok: false, err: String(e?.message || e) };
+    const req = await requestJsonDetailed(FMI_R_INDEX, 12000);
+    if (!req.ok) {
+      const errMsg = String(req.errorMsg || "");
+      _setLedger("fmi_hint", {
+        provider: "fmi",
+        url: FMI_R_INDEX,
+        fetchedAt: req.fetchedAt,
+        fetchAgeMin: 0,
+        dataTime: null,
+        dataAgeMin: null,
+        ok: false,
+        status: "bad",
+        reason: errMsg,
+        errorType: req.errorType || "",
+        errorMsg: errMsg,
+        latencyMs: req.latencyMs,
+        httpStatus: req.httpStatus,
+        sample: { rIndex: null }
+      });
+      return { ok: false, err: errMsg };
     }
+
+    const j = req.data;
+    let bestProb = null;
+    const scan = (node) => {
+      if (!node) return;
+      if (Array.isArray(node)) return node.forEach(scan);
+      if (typeof node !== "object") return;
+      const prob = _num(_pick(node, ["probability", "prob", "AuroraProbability", "aurora_probability"]));
+      if (prob != null) bestProb = (bestProb == null ? prob : Math.max(bestProb, prob));
+      for (const v of Object.values(node)) scan(v);
+    };
+    scan(j);
+
+    _setLedger("fmi_hint", {
+      provider: "fmi",
+      url: FMI_R_INDEX,
+      fetchedAt: req.fetchedAt,
+      fetchAgeMin: 0,
+      dataTime: null,
+      dataAgeMin: null,
+      ok: bestProb != null,
+      status: bestProb != null ? "ok" : "bad",
+      reason: bestProb != null ? "" : "no_probability_found",
+      errorType: "",
+      errorMsg: "",
+      latencyMs: req.latencyMs,
+      httpStatus: req.httpStatus,
+      sample: { rIndex: bestProb }
+    });
+
+    return { ok: bestProb != null, prob: bestProb };
   }
 
   async function fetchNoaaPlasmaMirrorRaw() {
-    return requestJson(`./noaa/plasma.json?t=${Date.now()}`, 12000);
+    const url = `./noaa/plasma.json?t=${Date.now()}`;
+    const req = await requestJsonDetailed(url, 12000);
+
+    if (!req.ok) {
+      _setLedger("mirror_plasma_backfill", {
+        provider: "mirror-products",
+        url,
+        fetchedAt: req.fetchedAt,
+        fetchAgeMin: 0,
+        dataTime: null,
+        dataAgeMin: null,
+        ok: false,
+        status: "bad",
+        reason: req.errorMsg || "",
+        errorType: req.errorType || "",
+        errorMsg: req.errorMsg || "",
+        latencyMs: req.latencyMs,
+        httpStatus: req.httpStatus,
+        sample: {}
+      });
+      throw new Error(req.errorMsg || "request failed");
+    }
+
+    _setLedger("mirror_plasma_backfill", {
+      provider: "mirror-products",
+      url,
+      fetchedAt: req.fetchedAt,
+      fetchAgeMin: 0,
+      dataTime: null,
+      dataAgeMin: null,
+      ok: true,
+      status: "ok",
+      reason: "",
+      errorType: "",
+      errorMsg: "",
+      latencyMs: req.latencyMs,
+      httpStatus: req.httpStatus,
+      sample: {}
+    });
+
+    return req.data;
+  }
+
+  function _kpSample(j) {
+    if (!Array.isArray(j) || j.length < 2) return { todayMax: null, tomorrowMax: null };
+    const now = new Date();
+    const d0 = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const d1 = d0 + 24 * 3600 * 1000;
+    const d2 = d1 + 24 * 3600 * 1000;
+    let todayMax = null;
+    let tomorrowMax = null;
+    for (let i = 1; i < j.length; i++) {
+      const row = j[i];
+      if (!Array.isArray(row) || row.length < 2) continue;
+      const t = Date.parse(row[0]);
+      const kp = Number(row[1]);
+      if (!Number.isFinite(t) || !Number.isFinite(kp)) continue;
+      if (t >= d0 && t < d1) todayMax = todayMax == null ? kp : Math.max(todayMax, kp);
+      if (t >= d1 && t < d2) tomorrowMax = tomorrowMax == null ? kp : Math.max(tomorrowMax, kp);
+    }
+    return { todayMax, tomorrowMax };
   }
 
   async function fetchKpRaw() {
-    return requestTextJson(NOAA_KP_FORECAST, 12000);
+    const req = await requestTextDetailed(NOAA_KP_FORECAST, 12000);
+    if (!req.ok) {
+      _setLedger("kp", {
+        provider: "swpc-noaa",
+        url: NOAA_KP_FORECAST,
+        fetchedAt: req.fetchedAt,
+        fetchAgeMin: 0,
+        dataTime: null,
+        dataAgeMin: null,
+        ok: false,
+        status: "bad",
+        reason: req.errorMsg || "",
+        errorType: req.errorType || "",
+        errorMsg: req.errorMsg || "",
+        latencyMs: req.latencyMs,
+        httpStatus: req.httpStatus,
+        sample: { todayMax: null, tomorrowMax: null }
+      });
+      throw new Error(req.errorMsg || "request failed");
+    }
+
+    try {
+      const t = req.data;
+      if (!t) throw new Error("empty");
+      const j = JSON.parse(t);
+      _setLedger("kp", {
+        provider: "swpc-noaa",
+        url: NOAA_KP_FORECAST,
+        fetchedAt: req.fetchedAt,
+        fetchAgeMin: 0,
+        dataTime: null,
+        dataAgeMin: null,
+        ok: true,
+        status: "ok",
+        reason: "",
+        errorType: "",
+        errorMsg: "",
+        latencyMs: req.latencyMs,
+        httpStatus: req.httpStatus,
+        sample: _kpSample(j)
+      });
+      return j;
+    } catch (e) {
+      const msg = String(e?.message || e);
+      _setLedger("kp", {
+        provider: "swpc-noaa",
+        url: NOAA_KP_FORECAST,
+        fetchedAt: req.fetchedAt,
+        fetchAgeMin: 0,
+        dataTime: null,
+        dataAgeMin: null,
+        ok: false,
+        status: "bad",
+        reason: msg,
+        errorType: "parse",
+        errorMsg: msg,
+        latencyMs: req.latencyMs,
+        httpStatus: req.httpStatus,
+        sample: { todayMax: null, tomorrowMax: null }
+      });
+      throw e;
+    }
   }
 
   async function fetchOvationRaw() {
-    return requestTextJson(NOAA_OVATION, 12000);
+    const req = await requestTextDetailed(NOAA_OVATION, 12000);
+    if (!req.ok) {
+      _setLedger("ovation", {
+        provider: "swpc-noaa",
+        url: NOAA_OVATION,
+        fetchedAt: req.fetchedAt,
+        fetchAgeMin: 0,
+        dataTime: null,
+        dataAgeMin: null,
+        ok: false,
+        status: "bad",
+        reason: req.errorMsg || "",
+        errorType: req.errorType || "",
+        errorMsg: req.errorMsg || "",
+        latencyMs: req.latencyMs,
+        httpStatus: req.httpStatus,
+        sample: { observationTime: null, forecastTime: null }
+      });
+      throw new Error(req.errorMsg || "request failed");
+    }
+
+    try {
+      const t = req.data;
+      if (!t) throw new Error("empty");
+      const j = JSON.parse(t);
+      const dataTime = j?.ObservationTime || j?.ForecastTime || null;
+      _setLedger("ovation", {
+        provider: "swpc-noaa",
+        url: NOAA_OVATION,
+        fetchedAt: req.fetchedAt,
+        fetchAgeMin: 0,
+        dataTime,
+        dataAgeMin: _computeAgeMin(dataTime),
+        ok: true,
+        status: "ok",
+        reason: "",
+        errorType: "",
+        errorMsg: "",
+        latencyMs: req.latencyMs,
+        httpStatus: req.httpStatus,
+        sample: {
+          observationTime: j?.ObservationTime || null,
+          forecastTime: j?.ForecastTime || null
+        }
+      });
+      return j;
+    } catch (e) {
+      const msg = String(e?.message || e);
+      _setLedger("ovation", {
+        provider: "swpc-noaa",
+        url: NOAA_OVATION,
+        fetchedAt: req.fetchedAt,
+        fetchAgeMin: 0,
+        dataTime: null,
+        dataAgeMin: null,
+        ok: false,
+        status: "bad",
+        reason: msg,
+        errorType: "parse",
+        errorMsg: msg,
+        latencyMs: req.latencyMs,
+        httpStatus: req.httpStatus,
+        sample: { observationTime: null, forecastTime: null }
+      });
+      throw e;
+    }
+  }
+
+  function _cloudSample(j) {
+    const h = j?.hourly;
+    if (!h) return { low: null, mid: null, high: null, max3: null };
+    const low = Array.isArray(h.cloudcover_low) ? Number(h.cloudcover_low[0]) : null;
+    const mid = Array.isArray(h.cloudcover_mid) ? Number(h.cloudcover_mid[0]) : null;
+    const high = Array.isArray(h.cloudcover_high) ? Number(h.cloudcover_high[0]) : null;
+    const values = [low, mid, high].filter((v) => Number.isFinite(v));
+    return {
+      low: Number.isFinite(low) ? low : null,
+      mid: Number.isFinite(mid) ? mid : null,
+      high: Number.isFinite(high) ? high : null,
+      max3: values.length ? Math.max(...values) : null
+    };
   }
 
   async function fetchCloudsRaw(lat, lon) {
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${encodeURIComponent(lat)}&longitude=${encodeURIComponent(lon)}&hourly=cloudcover_low,cloudcover_mid,cloudcover_high&forecast_days=3&timezone=auto`;
-    return requestTextJson(url, 12000);
+    const req = await requestTextDetailed(url, 12000);
+
+    if (!req.ok) {
+      _setLedger("clouds", {
+        provider: "open-meteo",
+        url,
+        fetchedAt: req.fetchedAt,
+        fetchAgeMin: 0,
+        dataTime: null,
+        dataAgeMin: null,
+        ok: false,
+        status: "bad",
+        reason: req.errorMsg || "",
+        errorType: req.errorType || "",
+        errorMsg: req.errorMsg || "",
+        latencyMs: req.latencyMs,
+        httpStatus: req.httpStatus,
+        sample: { low: null, mid: null, high: null, max3: null }
+      });
+      throw new Error(req.errorMsg || "request failed");
+    }
+
+    try {
+      const t = req.data;
+      if (!t) throw new Error("empty");
+      const j = JSON.parse(t);
+      const dataTime = Array.isArray(j?.hourly?.time) ? j.hourly.time[0] : null;
+      _setLedger("clouds", {
+        provider: "open-meteo",
+        url,
+        fetchedAt: req.fetchedAt,
+        fetchAgeMin: 0,
+        dataTime,
+        dataAgeMin: _computeAgeMin(dataTime),
+        ok: true,
+        status: "ok",
+        reason: "",
+        errorType: "",
+        errorMsg: "",
+        latencyMs: req.latencyMs,
+        httpStatus: req.httpStatus,
+        sample: _cloudSample(j)
+      });
+      return j;
+    } catch (e) {
+      const msg = String(e?.message || e);
+      _setLedger("clouds", {
+        provider: "open-meteo",
+        url,
+        fetchedAt: req.fetchedAt,
+        fetchAgeMin: 0,
+        dataTime: null,
+        dataAgeMin: null,
+        ok: false,
+        status: "bad",
+        reason: msg,
+        errorType: "parse",
+        errorMsg: msg,
+        latencyMs: req.latencyMs,
+        httpStatus: req.httpStatus,
+        sample: { low: null, mid: null, high: null, max3: null }
+      });
+      throw e;
+    }
+  }
+
+  function getAuditLedger() {
+    const audit = _ensureAudit();
+    return JSON.parse(JSON.stringify(audit.ledger || {}));
+  }
+
+  function getAuditSnapshot() {
+    const audit = _ensureAudit();
+    return JSON.parse(JSON.stringify(audit));
   }
 
   window.DataProvider = {
@@ -326,6 +740,10 @@
     fetchNoaaPlasmaMirrorRaw,
     fetchKpRaw,
     fetchOvationRaw,
-    fetchCloudsRaw
+    fetchCloudsRaw,
+    getAuditLedger,
+    getAuditSnapshot
   };
+
+  _ensureAudit();
 })();
