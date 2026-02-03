@@ -1,5 +1,5 @@
 // ===============================
-// Data Adapter (frozen protocol v1)
+// Data Adapter (frozen protocol v1, legacy / currently unused by app.js runtime path)
 // ===============================
 const BASE_PATH = window.location.pathname.includes("/aurora-capture/")
   ? "/aurora-capture"
@@ -134,4 +134,5 @@ async function getRealtimeState() {
   };
 }
 
+// Legacy global export kept for backward compatibility; do not remove in this round.
 window.getRealtimeState = getRealtimeState;

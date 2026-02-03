@@ -1021,15 +1021,10 @@ function fillCurrentLocation(){
     };
 
     async function _fetchJson(url, timeoutMs = 12000){
-      const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), timeoutMs);
-      try{
-        const res = await fetch(url, { cache:"no-store", signal: ctrl.signal });
-        if(!res.ok) throw new Error(`HTTP ${res.status}`);
-        return await res.json();
-      }finally{
-        clearTimeout(timer);
+      if(window.DataProvider && typeof window.DataProvider.requestJson === "function"){
+        return window.DataProvider.requestJson(url, timeoutMs);
       }
+      throw new Error("DataProvider.requestJson unavailable");
     }
 
     function _latestValidFromNoaaTable(noaaTable, want){
@@ -1078,190 +1073,36 @@ function fillCurrentLocation(){
     }
 
     async function _fetchRtsw1m(){
-      const out = {
+      if(window.DataProvider && typeof window.DataProvider.fetchRtsw1m === "function"){
+        return window.DataProvider.fetchRtsw1m();
+      }
+      return {
         ok:false,
         src:"rtsw-1m",
+        err:"DataProvider.fetchRtsw1m unavailable",
         imf:{ bt_nT:null, bz_gsm_nT:null, ts:null, ageMin: Infinity, bz15_nT:null, bz30_nT:null, dbz15_nT:null, dbz30_nT:null },
         solarWind:{ speed_km_s:null, density_cm3:null, ts:null, ageMin: Infinity }
       };
-
-      try{
-        const [magJ, windJ] = await Promise.all([
-          _fetchJson(NOAA_RTSW_MAG_1M, 12000),
-          _fetchJson(NOAA_RTSW_WIND_1M, 12000)
-        ]);
-
-        const pickLast = (j) => {
-          if(Array.isArray(j) && j.length) return j[j.length-1];
-          if(j && Array.isArray(j.data) && j.data.length) return j.data[j.data.length-1];
-          return null;
-        };
-
-        const magLast = pickLast(magJ);
-        const windLast = pickLast(windJ);
-
-        // --- Trend (dBz/dt) from RTSW 1m history ---
-        const pickBzBack = (arr, minutesBack) => {
-          try{
-            const a = Array.isArray(arr) ? arr : (Array.isArray(arr?.data) ? arr.data : null);
-            if(!a || !a.length) return null;
-
-            // approximate: use latest timestamp and scan backward to nearest target time
-            const last = a[a.length - 1];
-            const tLastStr = _pick(last, ["time_tag","time","timestamp","datetime","date_time"]);
-            const tLast = _parseTimeLike(tLastStr);
-            if(!Number.isFinite(tLast)) return null;
-
-            const target = tLast - minutesBack * 60000;
-            let best = null;
-            let bestD = Infinity;
-
-            // scan from end backward (faster)
-            for(let i = a.length - 1; i >= 0; i--){
-              const row = a[i];
-              const tsStr = _pick(row, ["time_tag","time","timestamp","datetime","date_time"]);
-              const t = _parseTimeLike(tsStr);
-              if(!Number.isFinite(t)) continue;
-
-              // stop early if we are much older than target (array ordered by time)
-              if(t < target - 10*60000) break;
-
-              const d = Math.abs(t - target);
-              if(d < bestD){
-                const bzv = _num(_pick(row, ["bz_gsm","bz_gsm_nT","bz","bz_nt","Bz"]));
-                if(bzv != null){
-                  bestD = d;
-                  best = bzv;
-                }
-              }
-            }
-            return best;
-          }catch(_){
-            return null;
-          }
-        };
-
-        const bz15 = pickBzBack(magJ, 15);
-        const bz30 = pickBzBack(magJ, 30);
-
-        const magTs = _pick(magLast, ["time_tag","time","timestamp","datetime","date_time"]);
-        const bt = _num(_pick(magLast, ["bt","bt_nT","bt_nt","B_t","total"]));
-        const bz = _num(_pick(magLast, ["bz_gsm","bz_gsm_nT","bz","bz_nt","Bz"]));
-
-        const windTs = _pick(windLast, ["time_tag","time","timestamp","datetime","date_time"]);
-        const v = _num(_pick(windLast, ["speed","speed_km_s","v","V","flow_speed"]));
-        const n = _num(_pick(windLast, ["density","density_cm3","n","N","proton_density"]));
-
-        const nowMs = Date.now();
-        const tMag = _parseTimeLike(magTs);
-        const tWind = _parseTimeLike(windTs);
-
-        if(bt != null) out.imf.bt_nT = bt;
-        if(bz != null) out.imf.bz_gsm_nT = bz;
-        if(bz15 != null) out.imf.bz15_nT = bz15;
-        if(bz30 != null) out.imf.bz30_nT = bz30;
-        if(bz != null && bz15 != null) out.imf.dbz15_nT = (bz - bz15);
-        if(bz != null && bz30 != null) out.imf.dbz30_nT = (bz - bz30);
-        if(magTs) out.imf.ts = magTs;
-        if(Number.isFinite(tMag)) out.imf.ageMin = (nowMs - tMag) / 60000;
-
-        if(v != null) out.solarWind.speed_km_s = v;
-        if(n != null) out.solarWind.density_cm3 = n;
-        if(windTs) out.solarWind.ts = windTs;
-        if(Number.isFinite(tWind)) out.solarWind.ageMin = (nowMs - tWind) / 60000;
-
-        const okMag = (out.imf.bt_nT != null || out.imf.bz_gsm_nT != null) && Number.isFinite(out.imf.ageMin);
-        const okWind = (out.solarWind.speed_km_s != null || out.solarWind.density_cm3 != null) && Number.isFinite(out.solarWind.ageMin);
-        out.ok = okMag || okWind;
-
-        return out;
-      }catch(e){
-        out.err = String(e?.message || e);
-        return out;
-      }
     }
 
     async function _fetchMirrorProducts(){
-      const out = {
+      if(window.DataProvider && typeof window.DataProvider.fetchMirrorProducts === "function"){
+        return window.DataProvider.fetchMirrorProducts();
+      }
+      return {
         ok:false,
         src:"mirror-products",
+        err:"DataProvider.fetchMirrorProducts unavailable",
         imf:{ bt_nT:null, bz_gsm_nT:null, ts:null, ageMin: Infinity },
         solarWind:{ speed_km_s:null, density_cm3:null, ts:null, ageMin: Infinity }
       };
-
-      try{
-        const [magWrap, plasmaWrap] = await Promise.all([
-          _fetchJson(`./noaa/mag.json?t=${Date.now()}`, 12000),
-          _fetchJson(`./noaa/plasma.json?t=${Date.now()}`, 12000),
-        ]);
-
-        const magLast = _latestValidFromNoaaTable(magWrap?.noaa, {
-          time:"time_tag",
-          fields:{
-            bt:["bt","Bt","bt_nT","bt_nt"],
-            bz:["bz_gsm","Bz","bz","bz_gsm_nT","bz_nt"]
-          }
-        });
-
-        const plasmaLast = _latestValidFromNoaaTable(plasmaWrap?.noaa, {
-          time:"time_tag",
-          fields:{
-            v:["speed","V","speed_km_s","flow_speed"],
-            n:["density","N","density_cm3","proton_density"]
-          }
-        });
-
-        const nowMs = Date.now();
-
-        if(magLast){
-          if(magLast.bt != null) out.imf.bt_nT = magLast.bt;
-          if(magLast.bz != null) out.imf.bz_gsm_nT = magLast.bz;
-          out.imf.ts = magLast.ts;
-          const t = _parseTimeLike(magLast.ts);
-          if(Number.isFinite(t)) out.imf.ageMin = (nowMs - t) / 60000;
-        }
-
-        if(plasmaLast){
-          if(plasmaLast.v != null) out.solarWind.speed_km_s = plasmaLast.v;
-          if(plasmaLast.n != null) out.solarWind.density_cm3 = plasmaLast.n;
-          out.solarWind.ts = plasmaLast.ts;
-          const t = _parseTimeLike(plasmaLast.ts);
-          if(Number.isFinite(t)) out.solarWind.ageMin = (nowMs - t) / 60000;
-        }
-
-        const hasAny =
-          out.imf.bt_nT != null || out.imf.bz_gsm_nT != null ||
-          out.solarWind.speed_km_s != null || out.solarWind.density_cm3 != null;
-
-        out.ok = hasAny && (Number.isFinite(out.imf.ageMin) || Number.isFinite(out.solarWind.ageMin));
-        return out;
-      }catch(e){
-        out.err = String(e?.message || e);
-        return out;
-      }
     }
 
     async function _fetchFmiHint(){
-      try{
-        const j = await _fetchJson(FMI_R_INDEX, 12000);
-
-        let bestProb = null;
-        const scan = (node) => {
-          if(!node) return;
-          if(Array.isArray(node)) return node.forEach(scan);
-          if(typeof node !== "object") return;
-
-          const prob = _num(_pick(node, ["probability","prob","AuroraProbability","aurora_probability"]));
-          if(prob != null) bestProb = (bestProb == null ? prob : Math.max(bestProb, prob));
-
-          for(const v of Object.values(node)) scan(v);
-        };
-        scan(j);
-
-        return { ok: bestProb != null, prob: bestProb };
-      }catch(e){
-        return { ok:false, err:String(e?.message || e) };
+      if(window.DataProvider && typeof window.DataProvider.fetchFmiHint === "function"){
+        return window.DataProvider.fetchFmiHint();
       }
+      return { ok:false, err:"DataProvider.fetchFmiHint unavailable" };
     }
 
     function _mergeRt(primary, secondary){
@@ -1591,10 +1432,10 @@ function fillCurrentLocation(){
           if(swObj.v != null && swObj.n != null) return { ok:false };
 
           // 拉取镜像的 plasma.json（同源静态文件，带缓存破坏参数）
-          const url = `./noaa/plasma.json?t=${Date.now()}`;
-          const res = await fetch(url, { cache: "no-store" });
-          if(!res.ok) return { ok:false };
-          const j = await res.json();
+          if(!window.DataProvider || typeof window.DataProvider.fetchNoaaPlasmaMirrorRaw !== "function"){
+            return { ok:false };
+          }
+          const j = await window.DataProvider.fetchNoaaPlasmaMirrorRaw();
 
           // 兼容两种形态：
           // 1) noaa = [ [header...], [row...], ... ]

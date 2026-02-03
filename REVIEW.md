@@ -79,3 +79,52 @@
 
 #### 5. 回滚方案（Rollback）
 - 执行 `git revert <Step 1 提交SHA>` 回滚本步文档变更。
+
+---
+
+## Step 2（B3 DataProvider 单点入口）
+
+#### 0. 本次变更一句话
+- 收口前端请求入口到 DataProvider，保持前台行为不变。
+
+#### 1. 改动范围（Scope）
+**1.1 改了什么**
+- dataProvider.js：新增统一请求入口，承载 realtime/mirror/fmi/kp/ovation/clouds 的 fetch 实现。
+- app.js：`_fetchRtsw1m/_fetchMirrorProducts/_fetchFmiHint` 与 plasma 回溯请求改为转调 `window.DataProvider`。
+- ui.js：`fetchKp/fetchOvation/fetchClouds` 改为转调 `window.DataProvider`；保留原返回结构与 note/fallback 语义。
+- index.html：新增 `dataProvider.js` 的 defer 脚本引用，不改现有 UI 结构。
+- adapter.js：增加 legacy/unused 注释，保留 `window.getRealtimeState` 导出。
+- REVIEW.md：追加 Step 2 记录。
+
+**1.2 明确没改什么（Hard No）**
+- 数据源域名与 URL
+- fallback 顺序与业务判断阈值
+- statusKey、文案、UI 结构与元素 id
+- 顶层 realtime 调用与 Run 按钮触发方式
+
+#### 2. 行为变化（Behavior Change）
+- Before：app.js/ui.js 内部直接发起 fetch。
+  After：app.js/ui.js 仅调用 DataProvider，前台结果保持一致。
+- Before：`window.Data.fetch*` 为直接请求实现。
+  After：`window.Data.fetch*` 作为兼容入口转调 DataProvider，返回结构不变。
+
+#### 3. 风险与护栏（Risk & Guardrails）
+- 风险：ui.js 的 `ok/warn/bad + data` 返回结构被改变。
+  触发条件：转调后误改 catch/fallback 逻辑。
+  护栏：保持原 `try/catch + cache fallback + note` 结构，仅替换取数语句。
+- 风险：DataProvider 不可用导致流程中断。
+  触发条件：脚本加载顺序错误或对象未挂载。
+  护栏：index.html 在 ui/app 前引入 `dataProvider.js`；调用点保留 unavailable 兜底错误分支。
+- 风险：realtime 行为改变（Unverified）。
+  触发条件：realtime 入口迁移后输出对象形态偏差。
+  护栏：DataProvider 复用原逻辑与字段名，app 侧 merge/status 逻辑未改。
+
+#### 4. 验收清单（Acceptance Checklist）
+- [ ] `app.js` 与 `ui.js` 不再直接 `fetch(` 外部 URL（Pass/Fail）
+- [ ] `window.Data.fetchKp/fetchOvation/fetchClouds` 返回结构与 note 语义保持不变（Pass/Fail）
+- [ ] Run 后四类数据仍按原流程刷新，状态点表现不变（Pass/Fail）
+- [ ] 顶层 realtime 调用仍保留且可执行（Pass/Fail）
+- [ ] `adapter.js` 保留 `window.getRealtimeState` 且已标记 legacy（Pass/Fail）
+
+#### 5. 回滚方案（Rollback）
+- 执行 `git revert <Step 2 提交SHA>` 回滚本步收口改动。

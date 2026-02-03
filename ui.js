@@ -418,12 +418,11 @@
 
   // ---------- data fetch ----------
   async function fetchKp(){
-    const url = "https://services.swpc.noaa.gov/products/noaa-planetary-k-index-forecast.json";
     try{
-      const r = await fetch(url, { cache:"no-store" });
-      const t = await r.text();
-      if(!t) throw new Error("empty");
-      const j = JSON.parse(t);
+      if(!window.DataProvider || typeof window.DataProvider.fetchKpRaw !== "function"){
+        throw new Error("DataProvider.fetchKpRaw unavailable");
+      }
+      const j = await window.DataProvider.fetchKpRaw();
       cacheSet("cache_kp", j);
       return { ok:true, note: statusNote("DOT_LABEL_KP", "ok"), data:j };
     }catch(e){
@@ -437,12 +436,11 @@
   }
 
   async function fetchOvation(){
-    const url = "https://services.swpc.noaa.gov/json/ovation_aurora_latest.json";
     try{
-      const r = await fetch(url, { cache:"no-store" });
-      const t = await r.text();
-      if(!t) throw new Error("empty");
-      const j = JSON.parse(t);
+      if(!window.DataProvider || typeof window.DataProvider.fetchOvationRaw !== "function"){
+        throw new Error("DataProvider.fetchOvationRaw unavailable");
+      }
+      const j = await window.DataProvider.fetchOvationRaw();
       cacheSet("cache_ovation", j);
       return { ok:true, note: statusNote("DOT_LABEL_OVATION", "ok"), data:j };
     }catch(e){
@@ -455,13 +453,12 @@
   }
 
   async function fetchClouds(lat, lon){
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${encodeURIComponent(lat)}&longitude=${encodeURIComponent(lon)}&hourly=cloudcover_low,cloudcover_mid,cloudcover_high&forecast_days=3&timezone=auto`;
     const k = `cache_clouds_${Number(lat).toFixed(2)}_${Number(lon).toFixed(2)}`;
     try{
-      const r = await fetch(url, { cache:"no-store" });
-      const t = await r.text();
-      if(!t) throw new Error("empty");
-      const j = JSON.parse(t);
+      if(!window.DataProvider || typeof window.DataProvider.fetchCloudsRaw !== "function"){
+        throw new Error("DataProvider.fetchCloudsRaw unavailable");
+      }
+      const j = await window.DataProvider.fetchCloudsRaw(lat, lon);
       cacheSet(k, { lat, lon, j });
       return { ok:true, note: statusNote("DOT_LABEL_CLOUDS", "ok"), data:j };
     }catch(e){
@@ -514,7 +511,8 @@
     initLangToggle,
   };
 
-  // Data fetchers kept as window.Data.* for app.js
+  // Deprecated compatibility entry: keep window.Data.* API unchanged for app.js callers.
+  // Actual request entrances are centralized in window.DataProvider.
   window.Data = window.Data || {};
   Object.assign(window.Data, { fetchKp, fetchClouds, fetchOvation });
 })();
