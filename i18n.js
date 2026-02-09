@@ -384,8 +384,8 @@
 
     UI_FOOTER_BLOCK: {
       type: "html",
-      zh: "佑酱已吐血更新到版本号：v3.0.0325 ； 备案许可证编号：沪ICP备2026001760号<br>数据源：NOAA SWPC（实时太阳风、OVATION nowcast、Kp 预报）与 Open-Meteo 云量预报。磁纬（MLAT）当前为估算（偶极近似）。",
-      en: "Version v3.0.0325 · ICP Filing No. 沪ICP备2026001760号<br>Data sources: NOAA SWPC (real-time solar wind, OVATION nowcast, Kp forecast) and Open-Meteo cloud forecast. MLAT is currently estimated (dipole approximation)."
+      zh: "佑酱已吐血更新到版本号：v3.0.0326 ； 备案许可证编号：沪ICP备2026001760号<br>数据源：NOAA SWPC（实时太阳风、OVATION nowcast、Kp 预报）与 Open-Meteo 云量预报。磁纬（MLAT）当前为估算（偶极近似）。",
+      en: "Version v3.0.0326 · ICP Filing No. 沪ICP备2026001760号<br>Data sources: NOAA SWPC (real-time solar wind, OVATION nowcast, Kp forecast) and Open-Meteo cloud forecast. MLAT is currently estimated (dipole approximation)."
     }
   };
 

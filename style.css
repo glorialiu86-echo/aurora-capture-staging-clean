@@ -452,7 +452,7 @@ input::placeholder{color:rgba(255,255,255,.35)}
   font-size: 12px;
   color:var(--muted);
 
-  /* prevent long status text (e.g. 来源/FMI) from breaking layout */
+  /* prevent long status text (e.g. 来源/数据源) from breaking layout */
   max-width: 100%;
   min-width: 0;
   white-space: nowrap;

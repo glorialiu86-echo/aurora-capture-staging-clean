@@ -106,7 +106,7 @@
 
 - 包含：
     - 翻译（DeepL / Worker / 本地）
-    - 气象与空间数据（NOAA / ECMWF / JMA / FMI 等）
+    - 气象与空间数据（NOAA / ECMWF / JMA 等）
     - 时间 / 地图 / 存储 / Worker
 
 **当前状态**：❌ 未完成

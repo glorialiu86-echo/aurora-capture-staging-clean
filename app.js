@@ -992,13 +992,10 @@ function fillCurrentLocation(){
     //   1) NOAA RTSW 1m (more continuous, noisier)  -> realtime feel + continuity
     //   2) Local mirrored NOAA products (mag/plasma)-> steadier baseline
     //   3) Last-known-good cache                    -> outage fallback
-    //   4) FMI (reference)                          -> hint when degraded/outage
     // ===============================
 
     const NOAA_RTSW_MAG_1M = "https://services.swpc.noaa.gov/json/rtsw/rtsw_mag_1m.json";
     const NOAA_RTSW_WIND_1M = "https://services.swpc.noaa.gov/json/rtsw/rtsw_wind_1m.json";
-    const FMI_R_INDEX = "https://space.fmi.fi/MIRACLE/RWC/data/r_index_latest_en.json";
-
     const LKG_CACHE_KEY = "ac_last_good_sw_v1";
 
     const _num = (x) => {
@@ -1098,13 +1095,6 @@ function fillCurrentLocation(){
       };
     }
 
-    async function _fetchFmiHint(){
-      if(window.DataProvider && typeof window.DataProvider.fetchFmiHint === "function"){
-        return window.DataProvider.fetchFmiHint();
-      }
-      return { ok:false, err:"DataProvider.fetchFmiHint unavailable" };
-    }
-
     function _mergeRt(primary, secondary){
       const out = JSON.parse(JSON.stringify(primary || {}));
       if(!out.imf) out.imf = { bt_nT:null, bz_gsm_nT:null, ts:null, ageMin:Infinity };
@@ -1171,10 +1161,9 @@ function fillCurrentLocation(){
     }
 
     async function getRealtimeStateSmart(){
-      const [rtsw, mir, fmi] = await Promise.all([
+      const [rtsw, mir] = await Promise.all([
         _fetchRtsw1m(),
-        _fetchMirrorProducts(),
-        _fetchFmiHint()
+        _fetchMirrorProducts()
       ]);
 
       // Prefer mirror-products, merge rtsw to reduce dead air
@@ -1194,8 +1183,6 @@ function fillCurrentLocation(){
         primary: mir?.ok ? "mirror-products" : (rtsw?.ok ? "rtsw-1m" : "none"),
         merged: [mir?.ok ? "mirror-products" : null, rtsw?.ok ? "rtsw-1m" : null].filter(Boolean)
       };
-      merged.fmi = fmi;
-
       // cache when usable and not outage
       const sw = {
         v: merged?.solarWind?.speed_km_s ?? null,

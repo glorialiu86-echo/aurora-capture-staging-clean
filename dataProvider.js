@@ -3,7 +3,6 @@
 (() => {
   const NOAA_RTSW_MAG_1M = "https://services.swpc.noaa.gov/json/rtsw/rtsw_mag_1m.json";
   const NOAA_RTSW_WIND_1M = "https://services.swpc.noaa.gov/json/rtsw/rtsw_wind_1m.json";
-  const FMI_R_INDEX = "https://space.fmi.fi/MIRACLE/RWC/data/r_index_latest_en.json";
   const NOAA_KP_FORECAST = "https://services.swpc.noaa.gov/products/noaa-planetary-k-index-forecast.json";
   const NOAA_OVATION = "https://services.swpc.noaa.gov/json/ovation_aurora_latest.json";
   const AUDIT_STORAGE_KEY = "ac_audit_ledger_v1";
@@ -384,61 +383,6 @@
     }
   }
 
-  async function fetchFmiHint() {
-    const req = await requestJsonDetailed(FMI_R_INDEX, 12000);
-    if (!req.ok) {
-      const errMsg = String(req.errorMsg || "");
-      _setLedger("fmi_hint", {
-        provider: "fmi",
-        url: FMI_R_INDEX,
-        fetchedAt: req.fetchedAt,
-        fetchAgeMin: 0,
-        dataTime: null,
-        dataAgeMin: null,
-        ok: false,
-        status: "bad",
-        reason: errMsg,
-        errorType: req.errorType || "",
-        errorMsg: errMsg,
-        latencyMs: req.latencyMs,
-        httpStatus: req.httpStatus,
-        sample: { rIndex: null }
-      });
-      return { ok: false, err: errMsg };
-    }
-
-    const j = req.data;
-    let bestProb = null;
-    const scan = (node) => {
-      if (!node) return;
-      if (Array.isArray(node)) return node.forEach(scan);
-      if (typeof node !== "object") return;
-      const prob = _num(_pick(node, ["probability", "prob", "AuroraProbability", "aurora_probability"]));
-      if (prob != null) bestProb = (bestProb == null ? prob : Math.max(bestProb, prob));
-      for (const v of Object.values(node)) scan(v);
-    };
-    scan(j);
-
-    _setLedger("fmi_hint", {
-      provider: "fmi",
-      url: FMI_R_INDEX,
-      fetchedAt: req.fetchedAt,
-      fetchAgeMin: 0,
-      dataTime: null,
-      dataAgeMin: null,
-      ok: bestProb != null,
-      status: bestProb != null ? "ok" : "bad",
-      reason: bestProb != null ? "" : "no_probability_found",
-      errorType: "",
-      errorMsg: "",
-      latencyMs: req.latencyMs,
-      httpStatus: req.httpStatus,
-      sample: { rIndex: bestProb }
-    });
-
-    return { ok: bestProb != null, prob: bestProb };
-  }
-
   async function fetchNoaaPlasmaMirrorRaw() {
     const url = `./noaa/plasma.json?t=${Date.now()}`;
     const req = await requestJsonDetailed(url, 12000);
@@ -736,7 +680,6 @@
     requestTextDetailed,
     fetchRtsw1m,
     fetchMirrorProducts,
-    fetchFmiHint,
     fetchNoaaPlasmaMirrorRaw,
     fetchKpRaw,
     fetchOvationRaw,
