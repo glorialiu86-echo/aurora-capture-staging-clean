@@ -3,8 +3,41 @@
   const PASS = "yoyoyoyo";
   const UNLOCK_KEY = "ac_audit_unlock_v1";
 
+  function isPreviewHost() {
+    try {
+      return location.hostname === "glorialiu86-echo.github.io" && location.pathname.startsWith("/aurora-capture-staging-clean/");
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function readFlag(key) {
+    try {
+      const v = localStorage.getItem(key);
+      if (v == null) return false;
+      if (v === "1" || v === "true") return true;
+      try {
+        return JSON.parse(v) === true;
+      } catch (_) {
+        return false;
+      }
+    } catch (_) {
+      return false;
+    }
+  }
+
   const qs = new URLSearchParams(window.location.search);
-  if (qs.get("audit") !== "1") return;
+  const auditParam = qs.get("audit");
+
+  if (isPreviewHost() && auditParam === "1") {
+    try { localStorage.setItem("AUDIT_MODE", "1"); } catch (_) {}
+  }
+
+  const auditEnabled = isPreviewHost()
+    ? (auditParam === "1" || readFlag("AUDIT_MODE") || readFlag("ac_auth_stub"))
+    : (auditParam === "1");
+
+  if (!auditEnabled) return;
 
   const byId = (id) => document.getElementById(id);
 
@@ -69,15 +102,15 @@
       return `<tr>
 <td>${esc(r.key)}</td>
 <td>${esc(r.provider || "")}</td>
-<td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(r.url || "")}">${esc(r.url || "")}</td>
+<td style=\"max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;\" title=\"${esc(r.url || "")}\">${esc(r.url || "")}</td>
 <td>${esc(r.status || "")}</td>
 <td>${esc(r.ok)}</td>
-<td title="${esc(r.fetchedAt || "")}">${esc(r.fetchedAt || "")}<br><small>${ageMinText(r.fetchedAt)}</small></td>
-<td title="${esc(r.dataTime || "")}">${esc(r.dataTime || "")}<br><small>${r.dataTime ? ageMinText(r.dataTime) : "—"}</small></td>
+<td title=\"${esc(r.fetchedAt || "")}\">${esc(r.fetchedAt || "")}<br><small>${ageMinText(r.fetchedAt)}</small></td>
+<td title=\"${esc(r.dataTime || "")}\">${esc(r.dataTime || "")}<br><small>${r.dataTime ? ageMinText(r.dataTime) : "—"}</small></td>
 <td>${esc(r.httpStatus)}</td>
 <td>${esc(r.latencyMs)}</td>
 <td>${esc(r.errorType || "")}<br><small>${esc(r.errorMsg || r.reason || "")}</small></td>
-<td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${sample}">${sample}</td>
+<td style=\"max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;\" title=\"${sample}\">${sample}</td>
 </tr>`;
     }).join("");
   }
