@@ -1,119 +1,178 @@
-# Project Agent Rules (Aurora Capture)
+# Aurora Capture｜项目 Agent 规则（AGENTS.md）
 
-This project is actively maintained by a human owner.
-All agents (including Codex) must follow these rules strictly.
-
----
-
-## 0. Absolute Priority (Hard Rules)
-- ❌ Do NOT modify `main` branch unless the user explicitly says so
-- ❌ Do NOT `commit` or `push` unless the user explicitly confirms
-- ❌ Do NOT modify files outside the approved list
-- ❌ Do NOT perform refactors unless explicitly requested
-
-Violation of any hard rule = immediate rejection.
+本项目由人类 Owner（佑酱）维护。
+所有 Agent（包括 Codex）必须严格遵守以下规则；任何越界均视为失败。
 
 ---
 
-## 1. Branch & Deployment Rules (Very Important)
-- `main` branch = production (www)
-- `staging-clean` branch = testing / preview
-- **All changes must land in `staging-clean` first**
-- `staging-clean` auto-deploys to aurora-capture-staging (GitHub Pages)
-- `staging-clean` push target = clean remote (aurora-capture-staging-clean)
-- `staging-clean` must NOT introduce business-logic divergence from `main`
-  - Only UI / testing / instrumentation differences are allowed
+## 0. 绝对优先级（硬规则｜违反即拒绝）
+
+- ❌ 未经用户明确指令：**禁止修改 `main` 分支**（含切换到 main 后直接改文件）
+- ❌ 未经用户明确确认：**禁止 `commit` 或 `push`**
+- ❌ 未经用户批准：**禁止修改“批准清单”之外的文件**
+- ❌ 未经用户明确要求：**禁止重构（refactor）/清理（cleanup）/格式化（formatting）/顺手优化**
+
+> 硬规则任一条被违反 = 立即拒绝合并 / 立即终止本轮协作。
 
 ---
 
-## 2. Mandatory REVIEW.md (Write Every Time)
-For **every non-trivial change** (any code, logic, infra, or behavior change),
-the agent **MUST generate a `REVIEW.md` file** in the repo root.
+## 1. 分支与部署规则（非常重要｜必须读懂再动）
 
-### 2.1 REVIEW.md is required BEFORE commit / push
-- Changes are **NOT considered reviewable** without `REVIEW.md`
-- The user will review `REVIEW.md` first, not raw diffs
-- No `REVIEW.md` → no approval
+### 1.1 路径 C（双工作区隔离）为默认上线策略
 
-### 2.1.1 REVIEW.md Rewrite Rule (Mandatory)
-- REVIEW.md 只保留“当前这一轮（下一次 commit+push）”的变更摘要，不做历史累积。
-- 在一次 commit+push 发生之前：所有细碎需求/补丁/修正都必须叠加进同一个 REVIEW.md（仍需遵守固定模板）。
-- 一旦该轮 commit+push 完成：下一轮改动必须**重新改写/覆盖** REVIEW.md（仍使用同一固定模板），不允许把上一次的 `Planned` / `Open questions` / 旧变更继续保留或追加。
-- 例外：如果 REVIEW.md 中存在“长期规范/词典/约束”（例如 FIXED_I18N_MAP canonical terms 这类不随版本变化的规范段落），允许保留，但必须明确标注为 `## Reference (Long-lived)` 并与本次变更摘要区块分隔。
+为避免误推与混仓，本项目长期采用 **路径 C：双工作区隔离**。
+
+- **工作区 A（预览工作区）**：只负责测试/预览发布（推到测试仓库）
+- **工作区 B（生产工作区）**：只负责正式上线（推到主仓库）
+- 两个工作区 **不得混用**：不得在同一工作区里同时推 `origin` 与 `clean`
+
+> 若用户没有明确说“进入生产工作区”，默认你在 **预览工作区**。
 
 ---
 
-## 3. Before Coding (Mandatory)
-Before writing **any code**, the agent must:
-1. Summarize understanding of the task
-2. List **exact files** to be modified or created
-3. Explicitly state whether business logic is affected
-4. Wait for explicit user confirmation
+### 1.2 三个概念（必须区分）
+
+- **主仓库（生产）**  
+  - remote：`origin`（aurora-capture）  
+  - 部署分支：`main`  
+  - 对应：正式站（www）
+
+- **测试仓库（预览）**  
+  - remote：`clean`（aurora-capture-staging-clean）  
+  - 部署分支：`main`  
+  - 对应预览站：  
+    https://glorialiu86-echo.github.io/aurora-capture-staging-clean/
+
+- **本地工作分支（用于开发与验证）**  
+  - 分支名：`staging-clean`  
+  - 说明：只用于本地/测试验证；**不等于任何仓库的部署分支**
 
 ---
 
-## 4. Code Modification Rules
-- Use **full function** or **full block replacement**
-- ❌ Do NOT insert scattered lines
-- ❌ Do NOT do “cleanup”, “formatting”, or “small improvements” unless asked
-- ❌ Do NOT rename files / variables / functions unless requested
+### 1.3 工作流硬规则（预览发布与正式上线）
+
+#### A) 预览发布（默认路径｜除非用户明确要求生产发布）
+- 所有改动必须先进入本地 `staging-clean` 完成验证（禁止直接在部署分支上开发）
+- **发布预览站**：将“当前本地 `staging-clean` 的 HEAD”推送到 **`clean/main`**
+  - 预览发布目标永远是：**测试仓库的 `main`**
+  - `clean/staging-clean` 不是部署目标（即使存在也不应作为发布路径）
+
+#### B) 正式上线（生产发布｜必须用户明确授权）
+- 只有用户明确说出以下任一指令时，才允许执行生产发布：
+  - “正式上线 / 发布到生产 / 推到主仓库 main / production release”
+- 正式上线仅在 **生产工作区（工作区 B）** 执行：
+  - 生产工作区必须满足：remote `origin` 可 push（且仅用于本次发布）
+  - 生产发布目标：**`origin/main`**
+- 未进入生产工作区前：任何涉及 `origin` 的推送行为一律禁止
 
 ---
 
-## 5. Scope Control
-- Only modify files explicitly approved by the user
-- If a better solution exists:
-  - Explain it
-  - Wait for user decision
-  - Do NOT auto-implement
+### 1.4 业务逻辑一致性约束（强约束）
+- `staging-clean` 不得引入与 `origin/main` 的业务逻辑分歧
+  - 仅允许 UI / 测试 / 仪表盘 / 埋点 / 观测性增强 等差异
+  - 若不确定是否属于“业务逻辑差异”，必须先停下并询问用户
 
 ---
 
-## 6. Language & Style
-- User instructions may be in Chinese
-- Code, APIs, comments, and identifiers must be in English
-- Markdown documentation must be clear, concise, and factual
-- 语言规则：默认简体中文；仅在用户明确要求时使用英文！
+## 2. REVIEW.md 强制要求（每次都要写）
 
-## 6.1 Versioning Rule (Mandatory)
-- 每次 **commit + push**（无论是否部署到 production），都必须同步更新项目版本号。
-- 当前版本号 **同时存在于以下两个位置，必须保持一致**：
-  1) **index.html**
+对**任何非微小变更**（涉及代码/逻辑/基础设施/可见行为变化），必须在仓库根目录生成或改写 `REVIEW.md`。
+
+### 2.1 没有 REVIEW.md 就不能 review、更不能 commit/push
+- 没有 `REVIEW.md`：本次变更视为不可审查
+- 用户先看 `REVIEW.md`，不是先看 diff
+- 无 `REVIEW.md` → 无批准 → 禁止 commit/push
+
+### 2.2 REVIEW.md 覆写规则（强制）
+- `REVIEW.md` 只保留“当前这一轮（下一次 commit+push）”的变更摘要，不做历史累积
+- 在一次 commit+push 发生之前：所有细碎补丁必须叠加进同一个 `REVIEW.md`（仍需遵守固定模板）
+- 一旦该轮 commit+push 完成：下一轮改动必须**重新改写/覆盖** `REVIEW.md`（仍使用同一固定模板），不允许把上一次的 Planned/Open questions/旧变更继续保留或追加
+- 例外：若存在长期规范/词典/约束（例如 FIXED_I18N_MAP canonical terms），允许保留，但必须放在：
+  - `## Reference (Long-lived)`  
+  且与本次变更摘要区块明确分隔
+
+---
+
+## 3. 开始写代码前必须做的事（Mandatory）
+
+在写任何代码前，必须先输出并等待用户确认：
+
+1) 你对任务的理解（不超过 10 行，明确要改什么）  
+2) 你准备修改/新建的**确切文件列表**  
+3) 明确说明：是否影响业务逻辑（Yes/No/Uncertain）  
+4) 停止，等待用户明确确认后再动手
+
+---
+
+## 4. 代码修改规则（避免碎片化与暗改）
+
+- 必须使用“整块替换”策略：
+  - 优先用 **完整函数替换** 或 **完整代码块替换**
+- ❌ 禁止零散插入几行（scattered lines）
+- ❌ 未经要求：禁止清理、格式化、顺手优化
+- ❌ 未经要求：禁止重命名文件/变量/函数
+
+---
+
+## 5. 作用域控制（Scope）
+
+- 只能修改用户明确批准的文件
+- 如果你认为存在更优方案：
+  - 先解释“为什么更优”与代价
+  - 等用户决定
+  - ❌ 禁止自行实现
+
+---
+
+## 6. 语言与风格（强约束）
+
+- 用户指令可能是中文
+- 代码 / API / 注释 / 标识符：**必须是英文**
+- Markdown 文档：**默认简体中文**；仅在用户明确要求时使用英文
+- 文档表达要求：清晰、简洁、可核验；避免空话与自我发挥
+
+---
+
+## 6.1 版本号规则（强制｜每次 commit+push 都要做）
+
+- 每次 **commit + push**（无论是否部署到 production），都必须同步更新项目版本号
+- 当前版本号同时存在于以下两处，必须保持一致：
+  1) `index.html`
      - 用途：静态资源缓存控制（如 `?v=0320`）
-  2) **i18n.js → UI_FOOTER_BLOCK（zh / en）**
-     - 用途：页面底部展示用版本号文本（如 `v3.0.0320`）
-- **禁止只更新其中一处**；任何一次提交若出现版本号不一致，视为版本纪律违规。
-- 当前版本号格式为 **MMDD**（例如 `0320`）。
-- 该规则为**硬性约束**，需在 `REVIEW.md` 中作为每次提交的固定自检项记录。
+  2) `i18n.js` → `UI_FOOTER_BLOCK`（zh / en）
+     - 用途：页面底部展示（如 `v3.0.0320`）
+- ❌ 禁止只更新其中一处；出现不一致视为版本纪律违规
+- 版本号格式：**MMDD**（例如 `0320`）
+- 该规则必须在 `REVIEW.md` 中作为固定自检项记录
 
-### 升级规则
-- 每次 push 时，将 **index.html 中现有的版本号 `0319` 全部统一 +1**（例如 `0319 → 0320`）。
-- 仅允许修改 **index.html 内已存在的版本号位置**（预计约 8 处）。
+### 升级规则（强制）
+- 每次 push 时，将 `index.html`和 `i18n.js` 内已存在的版本号统一 +1（例如 `0319 → 0320`）
+- 仅允许修改 `index.html` 和 `i18n.js` 内**已存在**的版本号位置（预计约 8 处）
 - ❌ 不得在其他文件中新建版本号字段
 - ❌ 不得修改文件名、变量名、配置结构或引入新的版本机制
 - ❌ 不得推断、搜索或修改“可能是版本号”的其他数字
 
-### 约束
-- 若发生 push 但未更新上述版本号，视为 **流程不合规**
-- 若越权修改 index.html 以外的文件中的“版本号”，同样视为 **违规**
+### 约束（失败判定）
+- push 但未更新上述版本号 → 流程不合规
 
 ---
 
-## 7. Workflow Summary (TL;DR)
-1. Explain plan → wait
-2. Implement in `staging-clean`
-3. Generate `REVIEW.md`
-4. User reviews `REVIEW.md`
-5. Only then: commit / push (if approved)
+## 7. 工作流总结（TL;DR）
 
-## Review Output Contract（强制）
-
-本仓库的所有代码修改，必须产出**人类可读、可决策**的 REVIEW.md。
-REVIEW.md 的目标读者是「项目 Owner（人类）」，不是工具或代理。
-
-任何未按以下结构更新 REVIEW.md 的提交，视为 **未完成任务**，不得合并或部署。
+1) 先解释计划 → 等用户确认  
+2) 在本地 `staging-clean` 实现改动  
+3) 生成/改写 `REVIEW.md`  
+4) 用户审阅 `REVIEW.md`  
+5) 用户明确批准后：才允许 commit / push（并按 1.3 的发布规则选择预览或生产路径）
 
 ---
+
+## 8. REVIEW.md 输出契约（强制｜结构不可变）
+
+本仓库的所有代码修改，必须产出**人类可读、可决策**的 `REVIEW.md`。  
+目标读者是「项目 Owner（人类）」，不是工具或代理。
+
+任何未按以下结构更新 `REVIEW.md` 的提交，视为未完成任务，不得合并或部署。
 
 ### REVIEW.md 强制结构（顺序不可变）
 
@@ -142,8 +201,7 @@ REVIEW.md 的目标读者是「项目 Owner（人类）」，不是工具或代�
 - 风险是什么
 - 在什么条件下触发
 - 已采取的护栏 / 降级策略
-
-不确定的地方必须标注 **Unverified**。
+- 不确定处必须标注 **Unverified**
 
 #### 4. 验收清单（Acceptance Checklist）
 - 必须是人类可以逐条操作的 Pass / Fail 清单
@@ -152,4 +210,4 @@ REVIEW.md 的目标读者是「项目 Owner（人类）」，不是工具或代�
 #### 5. 回滚方案（Rollback）
 - 一句话说明如何回滚（revert 哪个 commit / tag）
 
-Anything outside this flow is invalid.
+> 除上述结构外的任何输出均视为无效。
