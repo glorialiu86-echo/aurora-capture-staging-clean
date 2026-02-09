@@ -20,6 +20,7 @@ Violation of any hard rule = immediate rejection.
 - `staging-clean` branch = testing / preview
 - **All changes must land in `staging-clean` first**
 - `staging-clean` auto-deploys to aurora-capture-staging (GitHub Pages)
+- `staging-clean` push target = clean remote (aurora-capture-staging-clean)
 - `staging-clean` must NOT introduce business-logic divergence from `main`
   - Only UI / testing / instrumentation differences are allowed
 
