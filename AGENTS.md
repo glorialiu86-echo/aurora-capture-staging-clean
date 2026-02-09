@@ -17,10 +17,10 @@ Violation of any hard rule = immediate rejection.
 
 ## 1. Branch & Deployment Rules (Very Important)
 - `main` branch = production (www)
-- `staging` branch = testing / preview
-- **All changes must land in `staging` first**
-- `staging` auto-deploys to aurora-capture-staging (GitHub Pages)
-- `staging` must NOT introduce business-logic divergence from `main`
+- `staging-clean` branch = testing / preview
+- **All changes must land in `staging-clean` first**
+- `staging-clean` auto-deploys to aurora-capture-staging (GitHub Pages)
+- `staging-clean` must NOT introduce business-logic divergence from `main`
   - Only UI / testing / instrumentation differences are allowed
 
 ---
@@ -100,7 +100,7 @@ Before writing **any code**, the agent must:
 
 ## 7. Workflow Summary (TL;DR)
 1. Explain plan → wait
-2. Implement in `staging`
+2. Implement in `staging-clean`
 3. Generate `REVIEW.md`
 4. User reviews `REVIEW.md`
 5. Only then: commit / push (if approved)

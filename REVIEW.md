@@ -1,228 +1,36 @@
 #### 0. 本次变更一句话
-- 版本号从0322统一升级到0323
+- 同步测试分支命名为 `staging-clean`。
 
 #### 1. 改动范围（Scope）
 **1.1 改了什么**
-- index.html：将现有静态资源缓存参数 `?v=0322` 统一改为 `?v=0323`。
-- i18n.js：将 `UI_FOOTER_BLOCK` 的中英文版本文案从 `v3.0.0322` 更新为 `v3.0.0323`。
-- REVIEW.md：重写为本轮版本号升级说明。
+- AGENTS.md：将测试分支描述与工作流中的 `staging` 统一改为 `staging-clean`。
+- REVIEW.md：重写为本轮分支规则同步说明。
 
 **1.2 明确没改什么（Hard No）**
-- 预测流程与模型逻辑
-- 数据结构与接口字段
-- 页面布局与交互行为
-- 任何非版本号文案与样式
+- 业务逻辑与数据流程
+- 前台 UI 结构与文案
+- 版本号与发布流程
 
 #### 2. 行为变化（Behavior Change）
-- Before：资源链接版本参数为 `?v=0322`。
-  After：资源链接版本参数为 `?v=0323`。
-- Before：页脚展示版本号为 `v3.0.0322`。
-  After：页脚展示版本号为 `v3.0.0323`。
-- Before：版本号两处为 0322。
-  After：版本号两处保持一致并同步为 0323。
+- Before：测试分支在规则中标记为 `staging`。
+  After：测试分支在规则中标记为 `staging-clean`。
+- Before：工作流要求在 `staging` 实施。
+  After：工作流要求在 `staging-clean` 实施。
+- Before：分支命名与实际使用不一致。
+  After：分支命名与实际使用对齐。
 
 #### 3. 风险与护栏（Risk & Guardrails）
-- 风险：版本号只更新一处导致不一致。
-  触发条件：仅改 `index.html` 或仅改 `i18n.js`。
-  护栏：本次同步更新两处并在提交前复核。
-- 风险：误改非版本号数字。
-  触发条件：批量替换范围过大。
-  护栏：仅替换已存在版本位点（资源参数与页脚版本文案）。
-- 风险：缓存未刷新导致仍加载旧资源（Unverified）。
-  触发条件：浏览器或 CDN 缓存策略。
-  护栏：通过 `?v=0323` 强制静态资源缓存失效。
+- 风险：遗漏某处 `staging` 描述导致规则不一致。
+  触发条件：文本替换不完整。
+  护栏：全文检索 `staging` 并逐条替换测试分支语义。
+- 风险：误改非分支语义（Unverified）。
+  触发条件：替换覆盖到 `aurora-capture-staging` 等非分支标识。
+  护栏：仅替换明确指向测试分支的行，保留 URL 文本。
 
 #### 4. 验收清单（Acceptance Checklist）
-- [ ] 查看页面源码，`index.html` 中所有现有 `?v=` 参数均为 `0323`（Pass/Fail）
-- [ ] 打开页面底部，中英文版本号均显示 `v3.0.0323`（Pass/Fail）
-- [ ] 预测结果、页面交互与布局无变化（Pass/Fail）
-- [ ] 非版本号模块（模型、数据、流程）未改动（Pass/Fail）
+- [ ] `AGENTS.md` 的测试分支描述全部为 `staging-clean`（Pass/Fail）
+- [ ] `Workflow Summary` 中步骤 2 为 `staging-clean`（Pass/Fail）
+- [ ] 其他文件未改动（Pass/Fail）
 
 #### 5. 回滚方案（Rollback）
-- 执行 `git revert <本次提交SHA>` 回滚本轮版本号升级。
-
----
-
-## Step 1（A1 前台行为基线）
-
-#### 0. 本次变更一句话
-- 新增前台行为基线断言文档。
-
-#### 1. 改动范围（Scope）
-**1.1 改了什么**
-- FRONTEND_BEHAVIOR_BASELINE.md：新增 10 条用户感知断言与手动验收步骤。
-- REVIEW.md：追加 Step 1 变更与验收记录。
-
-**1.2 明确没改什么（Hard No）**
-- app.js/ui.js/model.js 业务逻辑
-- 任何请求地址、阈值、状态映射、文案
-- 页面结构、样式、交互流程
-
-#### 2. 行为变化（Behavior Change）
-- Before：无 A1 基线断言文档。
-  After：新增可手动验收的行为断言清单。
-- Before：前台运行行为由代码隐式定义。
-  After：前台运行行为被显式记录为可核对基线。
-
-#### 3. 风险与护栏（Risk & Guardrails）
-- 风险：文档描述与真实行为偏差。
-  触发条件：后续代码变更但未同步更新基线文档。
-  护栏：将断言写为可手动复现步骤，便于回归核对。
-- 风险：误触发代码改动。
-  触发条件：在编写文档时修改 JS/HTML 文件。
-  护栏：本步仅新增 markdown 与 REVIEW 追加，无代码改动。
-
-#### 4. 验收清单（Acceptance Checklist）
-- [ ] `FRONTEND_BEHAVIOR_BASELINE.md` 存在并包含 5-10 条用户感知断言（Pass/Fail）
-- [ ] 文档覆盖 Run 触发、状态映射、kp/ovation/clouds fallback、solar wind LKG、顶层 realtime 调用（Pass/Fail）
-- [ ] 本步无 JS/HTML/CSS 逻辑改动（Pass/Fail）
-
-#### 5. 回滚方案（Rollback）
-- 执行 `git revert <Step 1 提交SHA>` 回滚本步文档变更。
-
----
-
-## Step 2（B3 DataProvider 单点入口）
-
-#### 0. 本次变更一句话
-- 收口前端请求入口到 DataProvider，保持前台行为不变。
-
-#### 1. 改动范围（Scope）
-**1.1 改了什么**
-- dataProvider.js：新增统一请求入口，承载 realtime/mirror/fmi/kp/ovation/clouds 的 fetch 实现。
-- app.js：`_fetchRtsw1m/_fetchMirrorProducts/_fetchFmiHint` 与 plasma 回溯请求改为转调 `window.DataProvider`。
-- ui.js：`fetchKp/fetchOvation/fetchClouds` 改为转调 `window.DataProvider`；保留原返回结构与 note/fallback 语义。
-- index.html：新增 `dataProvider.js` 的 defer 脚本引用，不改现有 UI 结构。
-- adapter.js：增加 legacy/unused 注释，保留 `window.getRealtimeState` 导出。
-- REVIEW.md：追加 Step 2 记录。
-
-**1.2 明确没改什么（Hard No）**
-- 数据源域名与 URL
-- fallback 顺序与业务判断阈值
-- statusKey、文案、UI 结构与元素 id
-- 顶层 realtime 调用与 Run 按钮触发方式
-
-#### 2. 行为变化（Behavior Change）
-- Before：app.js/ui.js 内部直接发起 fetch。
-  After：app.js/ui.js 仅调用 DataProvider，前台结果保持一致。
-- Before：`window.Data.fetch*` 为直接请求实现。
-  After：`window.Data.fetch*` 作为兼容入口转调 DataProvider，返回结构不变。
-
-#### 3. 风险与护栏（Risk & Guardrails）
-- 风险：ui.js 的 `ok/warn/bad + data` 返回结构被改变。
-  触发条件：转调后误改 catch/fallback 逻辑。
-  护栏：保持原 `try/catch + cache fallback + note` 结构，仅替换取数语句。
-- 风险：DataProvider 不可用导致流程中断。
-  触发条件：脚本加载顺序错误或对象未挂载。
-  护栏：index.html 在 ui/app 前引入 `dataProvider.js`；调用点保留 unavailable 兜底错误分支。
-- 风险：realtime 行为改变（Unverified）。
-  触发条件：realtime 入口迁移后输出对象形态偏差。
-  护栏：DataProvider 复用原逻辑与字段名，app 侧 merge/status 逻辑未改。
-
-#### 4. 验收清单（Acceptance Checklist）
-- [ ] `app.js` 与 `ui.js` 不再直接 `fetch(` 外部 URL（Pass/Fail）
-- [ ] `window.Data.fetchKp/fetchOvation/fetchClouds` 返回结构与 note 语义保持不变（Pass/Fail）
-- [ ] Run 后四类数据仍按原流程刷新，状态点表现不变（Pass/Fail）
-- [ ] 顶层 realtime 调用仍保留且可执行（Pass/Fail）
-- [ ] `adapter.js` 保留 `window.getRealtimeState` 且已标记 legacy（Pass/Fail）
-
-#### 5. 回滚方案（Rollback）
-- 执行 `git revert <Step 2 提交SHA>` 回滚本步收口改动。
-
----
-
-## Step 3（D2 requestPolicy 统一请求策略）
-
-#### 0. 本次变更一句话
-- 新增 requestPolicy 并让 DataProvider 请求统一经过该封装。
-
-#### 1. 改动范围（Scope）
-**1.1 改了什么**
-- requestPolicy.js：新增统一请求层，收敛 timeout/no-store/错误结构。
-- dataProvider.js：改为调用 `RequestPolicy`，新增 `requestJsonDetailed/requestTextDetailed`。
-- index.html：新增 `requestPolicy.js` 脚本引用（位于 `dataProvider.js` 之前）。
-- REVIEW.md：追加 Step 3 记录。
-
-**1.2 明确没改什么（Hard No）**
-- 数据源 URL 与 provider 选择
-- 业务层成功/失败判定与 fallback 顺序
-- statusKey 与前台文案
-- Run 与顶层 realtime 触发方式
-
-#### 2. 行为变化（Behavior Change）
-- Before：DataProvider 内部各请求各自处理错误。
-  After：DataProvider 统一通过 RequestPolicy 获取标准请求结果结构。
-- Before：请求层错误字段非统一。
-  After：请求层统一输出 `{ok,httpStatus,errorType,errorMsg,latencyMs,fetchedAt}`。
-
-#### 3. 风险与护栏（Risk & Guardrails）
-- 风险：标准化封装改变业务 catch 分支触发条件。
-  触发条件：原先抛错路径被吞掉。
-  护栏：DataProvider 仍在失败时 `throw Error(...)`，保持上层逻辑不变。
-- 风险：script 顺序错误导致 RequestPolicy 未就绪。
-  触发条件：`dataProvider.js` 先于 `requestPolicy.js` 执行。
-  护栏：index.html 中先引入 `requestPolicy.js`，再引入 `dataProvider.js`。
-- 风险：请求层返回结构缺字段（Unverified）。
-  触发条件：异常分支遗漏字段。
-  护栏：RequestPolicy 成功/失败分支均返回固定字段集。
-
-#### 4. 验收清单（Acceptance Checklist）
-- [ ] `requestPolicy.js` 存在并提供统一结构 `{ok,httpStatus,errorType,errorMsg,latencyMs,fetchedAt}`（Pass/Fail）
-- [ ] DataProvider 内部请求全部通过 RequestPolicy（Pass/Fail）
-- [ ] ui/app 前台可见行为与 Step 1 基线一致（Pass/Fail）
-- [ ] `app.js` 与 `ui.js` 仍无直接 fetch 调用（Pass/Fail）
-
-#### 5. 回滚方案（Rollback）
-- 执行 `git revert <Step 3 提交SHA>` 回滚本步请求策略改动。
-
----
-
-## Step 4（隐藏审计页 + 台账）
-
-#### 0. 本次变更一句话
-- 新增 `?audit=1` 隐藏审计页与请求台账只读展示。
-
-#### 1. 改动范围（Scope）
-**1.1 改了什么**
-- dataProvider.js：在请求层与数据层记录“最近一次状态台账”（无论成功失败）；落地到 `window.__AC_AUDIT__` + `sessionStorage`。
-- audit.js：新增审计页脚本（`?audit=1` 才启用），口令 `yoyoyoyo` 解锁后只读渲染台账。
-- index.html：仅新增 audit 容器与 `audit.js` 脚本引用；不改现有前台结构/元素 id/文案。
-- REVIEW.md：追加 Step 4 记录。
-
-**1.2 明确没改什么（Hard No）**
-- 普通访问路径（无 `?audit=1`）的 UI 结构与交互
-- 数据源、阈值、statusKey、fallback 顺序
-- Run 行为与页面加载顶层 realtime 行为
-- 审计页默认自动拉取行为（保持无）
-
-#### 2. 行为变化（Behavior Change）
-- Before：无审计页与统一台账。
-  After：`?audit=1` 下可输入口令查看“最近一次状态台账”。
-- Before：请求层错误信息分散于运行日志/局部对象。
-  After：请求尝试统一落入台账（`fetchedAt/latency/httpStatus/errorType/errorMsg`），并附 `dataTime/dataAge/sample`。
-- Before：无手动台账刷新入口。
-  After：审计页提供“Refresh Ledger”按钮（仅重渲染台账，不触发请求）。
-
-#### 3. 风险与护栏（Risk & Guardrails）
-- 风险：审计页误触发新请求。
-  触发条件：audit 渲染阶段调用 DataProvider 拉取函数。
-  护栏：audit.js 仅读取 `getAuditSnapshot/sessionStorage`，不调用任何 fetch API。
-- 风险：普通用户看到审计 UI。
-  触发条件：默认页面直接展示 audit 容器。
-  护栏：容器默认 `display:none`，仅当 URL 含 `?audit=1` 才显示。
-- 风险：口令绕过或持久化过长。
-  触发条件：把解锁状态写入 localStorage。
-  护栏：仅写入 `sessionStorage`，关闭标签页即失效。
-- 风险：台账字段不完整（Unverified）。
-  触发条件：异常分支漏记 dataKey 字段。
-  护栏：各 dataKey 在成功/失败分支均调用 `_setLedger(...)`。
-
-#### 4. 验收清单（Acceptance Checklist）
-- [ ] 无 `?audit=1` 访问时，页面视觉与行为与基线一致（Pass/Fail）
-- [ ] `?audit=1` 未解锁时仅显示口令输入，不展示台账内容（Pass/Fail）
-- [ ] 输入 `yoyoyoyo` 后展示台账；关闭标签页后需重新解锁（Pass/Fail）
-- [ ] 打开审计页不会新增请求（除现有页面加载顶层 realtime）(Pass/Fail)
-- [ ] Solar wind 异常场景下，台账可见 `fetchedAt/dataTime/dataAge/errorType/errorMsg`（Pass/Fail)
-
-#### 5. 回滚方案（Rollback）
-- 执行 `git revert <Step 4 提交SHA>` 回滚本步审计改动。
+- 执行 `git revert <本次提交SHA>` 回滚本次规则同步。
