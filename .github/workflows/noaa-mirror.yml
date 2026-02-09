@@ -39,8 +39,19 @@ jobs:
           set -euo pipefail
           mkdir -p noaa
 
-          echo "NOAA_URL length: ${#NOAA_URL}"
-          echo "NOAA_MAG_URL length: ${#NOAA_MAG_URL}"
+          DEFAULT_NOAA_URL="https://services.swpc.noaa.gov/products/solar-wind/plasma-5-minute.json"
+          DEFAULT_NOAA_MAG_URL="https://services.swpc.noaa.gov/products/solar-wind/mag-5-minute.json"
+
+          if [ -z "${NOAA_URL:-}" ]; then NOAA_URL="$DEFAULT_NOAA_URL"; fi
+          if [ -z "${NOAA_MAG_URL:-}" ]; then NOAA_MAG_URL="$DEFAULT_NOAA_MAG_URL"; fi
+
+          if [ -z "${NOAA_URL:-}" ] || [ -z "${NOAA_MAG_URL:-}" ]; then
+            echo "[ERROR] NOAA_URL or NOAA_MAG_URL is empty after fallback."
+            exit 1
+          fi
+
+          echo "NOAA_URL: $NOAA_URL"
+          echo "NOAA_MAG_URL: $NOAA_MAG_URL"
 
           curl -fsSL "$NOAA_URL" -o noaa/plasma.raw.json
           curl -fsSL "$NOAA_MAG_URL" -o noaa/mag.raw.json
